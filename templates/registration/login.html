@@ -1,0 +1,36 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="flex justify-center items-center h-full">
+    <div class="bg-gray-800 p-8 rounded-lg shadow-lg w-full max-w-md">
+        <h2 class="text-3xl font-bold mb-6 text-center text-yellow-500">เข้าสู่ระบบ</h2>
+        <form method="post">
+            {% csrf_token %}
+            <!-- ใช้ Django Form แต่จัดหน้าตาด้วย Tailwind -->
+            {% for field in form %}
+            <div class="mb-4">
+                <label for="{{ field.id_for_label }}" class="block text-gray-300 text-sm font-bold mb-2">
+                    {{ field.label }}
+                </label>
+                <input type="{{ field.field.widget.input_type }}" 
+                       name="{{ field.name }}" 
+                       id="{{ field.id_for_label }}"
+                       class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+                       {% if field.value %}value="{{ field.value }}"{% endif %}>
+                {% if field.errors %}
+                    <p class="text-red-500 text-xs italic">{{ field.errors.0 }}</p>
+                {% endif %}
+            </div>
+            {% endfor %}
+            <div class="flex items-center justify-between">
+                <button class="bg-yellow-500 hover:bg-yellow-600 text-gray-900 font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline w-full transition" type="submit">
+                    เข้าสู่ระบบ
+                </button>
+            </div>
+        </form>
+        <p class="text-center text-gray-400 mt-4">
+            ยังไม่มีบัญชี? <a href="{% url 'signup' %}" class="text-yellow-500 hover:underline">สมัครสมาชิก</a>
+        </p>
+    </div>
+</div>
+{% endblock %}

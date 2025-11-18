@@ -1,0 +1,195 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="max-w-5xl mx-auto bg-gray-800 rounded-xl overflow-hidden shadow-2xl">
+    <div class="md:flex">
+        <!-- Movie Poster -->
+        <div class="md:flex-shrink-0 relative group">
+             <img class="h-full w-full object-cover md:w-96" src="{{ movie_tmdb.poster_url }}" alt="{{ movie_tmdb.title }}">
+        </div>
+
+        <!-- Movie Info -->
+        <div class="p-8 md:flex-grow flex flex-col">
+            <!-- Title & Year -->
+            <h1 class="text-4xl font-bold mb-2">{{ movie_tmdb.title }} <span class="text-gray-400 text-2xl">({{ movie_tmdb.release_date|slice:":4" }})</span></h1>
+            
+            <!-- Genres & Rating -->
+            <div class="flex flex-wrap gap-2 mb-6">
+                {% for genre in movie_tmdb.genres %}
+                <span class="bg-gray-700 text-sm px-3 py-1 rounded-full">{{ genre }}</span>
+                {% endfor %}
+                {% if movie_tmdb.vote_average %}
+                <span class="bg-yellow-500 text-gray-900 text-sm px-3 py-1 rounded-full font-bold">★ {{ movie_tmdb.vote_average|floatformat:1 }} TMDb</span>
+                {% endif %}
+            </div>
+
+            <!-- Synopsis -->
+            <h2 class="text-xl font-semibold mb-2">เรื่องย่อ</h2>
+            <p class="text-gray-300 leading-relaxed mb-8 flex-grow">
+                {{ movie_tmdb.overview|default:"ไม่มีข้อมูลเรื่องย่อภาษาไทย" }}
+            </p>
+
+            <!-- Action Buttons Area -->
+            <div class="flex flex-wrap gap-4 mt-auto pt-6 border-t border-gray-700">
+                <!-- ปุ่มรีวิว -->
+                <a href="{% url 'add_review' movie_tmdb.tmdb_id %}" class="bg-yellow-500 hover:bg-yellow-600 text-gray-900 font-bold py-3 px-6 rounded-lg transition flex items-center transform hover:scale-105 shadow-lg">
+                    <span class="mr-2 text-xl">🎭</span> แปะอารมณ์หนังเรื่องนี้
+                </a>
+                
+                {% if user.is_authenticated %}
+                    <!-- ปุ่ม Fav -->
+                    <button id="fav-btn" data-tmdb-id="{{ movie_tmdb.tmdb_id }}" 
+                            class="bg-gray-700 hover:bg-pink-600 text-white font-bold py-3 px-5 rounded-lg transition flex items-center transform hover:scale-105 shadow-md {% if is_favorited %}bg-pink-600{% endif %}">
+                        <span id="fav-icon" class="mr-2 text-xl">{% if is_favorited %}❤️{% else %}🤍{% endif %}</span> 
+                        <span id="fav-text">{% if is_favorited %}Fav แล้ว{% else %}Favorite{% endif %}</span>
+                    </button>
+
+                    <!-- ปุ่ม Bookmark -->
+                    <button id="bookmark-btn" data-tmdb-id="{{ movie_tmdb.tmdb_id }}"
+                            class="bg-gray-700 hover:bg-blue-600 text-white font-bold py-3 px-5 rounded-lg transition flex items-center transform hover:scale-105 shadow-md {% if is_bookmarked %}bg-blue-600{% endif %}">
+                         <span id="bookmark-icon" class="mr-2 text-xl">{% if is_bookmarked %}🔖{% else %}🏷️{% endif %}</span>
+                         <span id="bookmark-text">{% if is_bookmarked %}บันทึกแล้ว{% else %}ดูภายหลัง{% endif %}</span>
+                    </button>
+                {% else %}
+                    <!-- ถ้ายังไม่ล็อกอิน -->
+                    <a href="{% url 'login' %}?next={{ request.path }}" class="bg-gray-700 hover:bg-gray-600 text-gray-400 font-bold py-3 px-4 rounded-lg transition flex items-center">
+                        เข้าสู่ระบบเพื่อบันทึกรายการ
+                    </a>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Reviews Section -->
+    <div class="p-8 bg-gray-900 border-t border-gray-700 mt-8">
+        <h2 class="text-2xl font-bold mb-6 flex items-center">
+            <span class="mr-2">💬</span> ความรู้สึกจากเพื่อนๆ Mood2Movie
+            <span class="ml-3 text-sm bg-gray-700 text-gray-300 px-3 py-1 rounded-full">{{ reviews.count }} รีวิว</span>
+        </h2>
+
+        {% if reviews %}
+            <div class="grid gap-6 md:grid-cols-2">
+                {% for review in reviews %}
+                <div class="bg-gray-800 p-6 rounded-xl shadow-md border border-gray-700 hover:border-gray-600 transition">
+                    <div class="flex justify-between items-start mb-4">
+                        <div class="flex items-center">
+                            <div class="w-10 h-10 bg-gradient-to-br from-yellow-400 to-yellow-600 rounded-full flex items-center justify-center font-bold text-gray-900 mr-3 shadow-sm">
+                                {{ review.user.username|slice:":1"|upper }}
+                            </div>
+                            <div>
+                                <h4 class="font-bold text-gray-200">{{ review.user.username }}</h4>
+                                <p class="text-xs text-gray-500">{{ review.created_at|date:"d M Y" }}</p>
+                            </div>
+                        </div>
+                        {% if review.rating %}
+                        <div class="bg-gray-900/50 px-3 py-1 rounded-full text-sm font-bold text-yellow-400 border border-yellow-500/30">
+                            ★ {{ review.rating|floatformat:1 }}
+                        </div>
+                        {% endif %}
+                    </div>
+
+                    {% if review.primary_mood %}
+                    <div class="mb-4">
+                        <span class="inline-flex items-center bg-blue-900/50 text-blue-200 text-sm px-3 py-1.5 rounded-lg font-semibold tracking-wide border border-blue-500/30">
+                            <!-- แสดง Emoji หน้า Mood ในรีวิวด้วย -->
+                            <span class="mr-1.5">
+                                {% if 'Happy' in review.primary_mood.name %}😊
+                                {% elif 'Sad' in review.primary_mood.name %}😭
+                                {% elif 'Scary' in review.primary_mood.name %}😨
+                                {% elif 'Surprised' in review.primary_mood.name %}😲
+                                {% elif 'Heartwarming' in review.primary_mood.name %}🥰
+                                {% elif 'Tense' in review.primary_mood.name %}😬
+                                {% elif 'Funny' in review.primary_mood.name %}🤣
+                                {% elif 'Relaxing' in review.primary_mood.name %}😌
+                                {% else %}🎭{% endif %}
+                            </span>
+                            {{ review.primary_mood.name }} (ระดับ {{ review.mood_intensity }}/5)
+                        </span>
+                    </div>
+                    {% endif %}
+
+                    {% if review.review_text %}
+                    <p class="text-gray-300 italic leading-relaxed">"{{ review.review_text }}"</p>
+                    {% else %}
+                    <p class="text-gray-500 italic">(ไม่ได้เขียนข้อความรีวิว)</p>
+                    {% endif %}
+                </div>
+                {% endfor %}
+            </div>
+        {% else %}
+            <div class="text-center py-16 bg-gray-800/50 rounded-xl border-2 border-dashed border-gray-700">
+                <p class="text-gray-400 text-xl mb-6">ยังไม่มีใครแปะอารมณ์หนังเรื่องนี้เลย 😅</p>
+                <a href="{% url 'add_review' movie_tmdb.tmdb_id %}" class="inline-block bg-yellow-500 text-gray-900 px-8 py-3 rounded-lg font-bold hover:bg-yellow-400 transition shadow-lg">
+                    เป็นคนแรกที่บอกความรู้สึกสิ!
+                </a>
+            </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- JavaScript for Ajax (Fav/Bookmark) -->
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const favBtn = document.getElementById('fav-btn');
+    const bookmarkBtn = document.getElementById('bookmark-btn');
+
+    async function toggleAction(url, btn, iconSpan, textSpan, activeClass, activeIcon, inactiveIcon, activeText, inactiveText) {
+        // ป้องกันการกดรัวๆ
+        if (btn.disabled) return;
+        btn.disabled = true;
+        btn.style.opacity = '0.7';
+
+        try {
+            const response = await fetch(url, {
+                method: 'POST',
+                headers: {
+                    'X-CSRFToken': '{{ csrf_token }}',
+                    'Content-Type': 'application/json'
+                }
+            });
+            
+            if (!response.ok) throw new Error('Network response was not ok');
+            
+            const data = await response.json();
+            if (data.status === 'added') {
+                btn.classList.add(activeClass);
+                btn.classList.remove('bg-gray-700');
+                iconSpan.textContent = activeIcon;
+                textSpan.textContent = activeText;
+            } else if (data.status === 'removed') {
+                btn.classList.remove(activeClass);
+                btn.classList.add('bg-gray-700');
+                iconSpan.textContent = inactiveIcon;
+                textSpan.textContent = inactiveText;
+            }
+        } catch (error) {
+            console.error('Error:', error);
+            alert('เกิดข้อผิดพลาด กรุณาลองใหม่');
+        } finally {
+            btn.disabled = false;
+            btn.style.opacity = '1';
+        }
+    }
+
+    if (favBtn) {
+        favBtn.addEventListener('click', function() {
+            toggleAction(
+                `/movies/movie/${this.dataset.tmdbId}/favorite/`, 
+                this, document.getElementById('fav-icon'), document.getElementById('fav-text'),
+                'bg-pink-600', '❤️', '🤍', 'Fav แล้ว', 'Favorite'
+            );
+        });
+    }
+
+    if (bookmarkBtn) {
+        bookmarkBtn.addEventListener('click', function() {
+            toggleAction(
+                `/movies/movie/${this.dataset.tmdbId}/bookmark/`,
+                this, document.getElementById('bookmark-icon'), document.getElementById('bookmark-text'),
+                'bg-blue-600', '🔖', '🏷️', 'บันทึกแล้ว', 'ดูภายหลัง'
+            );
+        });
+    }
+});
+</script>
+{% endblock %}

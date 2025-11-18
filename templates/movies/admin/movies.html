@@ -1,0 +1,68 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="flex flex-col md:flex-row gap-6">
+    <!-- Sidebar (Copy มา หรือทำเป็น include ก็ได้) -->
+    <aside class="w-full md:w-64 bg-gray-800 p-6 rounded-xl h-fit">
+        <h2 class="text-xl font-bold text-yellow-500 mb-4">Admin Menu</h2>
+        <nav class="space-y-2">
+            <a href="{% url 'admin_dashboard' %}" class="block py-2 px-4 text-gray-400 hover:bg-gray-700 hover:text-white rounded transition">📊 ภาพรวม</a>
+            <a href="{% url 'admin_movies' %}" class="block py-2 px-4 bg-gray-700 text-white rounded">🎬 จัดการหนัง</a>
+            <a href="{% url 'admin_moods' %}" class="block py-2 px-4 text-gray-400 hover:bg-gray-700 hover:text-white rounded transition">🎭 จัดการอารมณ์</a>
+        </nav>
+    </aside>
+
+    <div class="flex-1">
+        <div class="flex justify-between items-center mb-6">
+            <h1 class="text-3xl font-bold">จัดการภาพยนตร์</h1>
+            <a href="{% url 'search_movies' %}" class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded transition">
+                + เพิ่มหนัง (ผ่าน Search)
+            </a>
+        </div>
+
+        <!-- Search Box -->
+        <form method="GET" class="mb-6">
+            <input type="text" name="q" value="{{ query|default:'' }}" placeholder="ค้นหาชื่อหนังในระบบ..." 
+                   class="w-full p-3 bg-gray-800 border border-gray-700 rounded text-white focus:border-yellow-500 focus:outline-none">
+        </form>
+
+        <!-- Movies Table -->
+        <div class="bg-gray-800 rounded-xl shadow-lg overflow-hidden">
+            <table class="w-full text-left">
+                <thead class="bg-gray-700 text-gray-300">
+                    <tr>
+                        <th class="p-4">Poster</th>
+                        <th class="p-4">Title</th>
+                        <th class="p-4">Year</th>
+                        <th class="p-4">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for movie in movies %}
+                    <tr class="border-b border-gray-700 hover:bg-gray-700 transition">
+                        <td class="p-4">
+                            {% if movie.poster_path %}
+                            <img src="https://image.tmdb.org/t/p/w92{{ movie.poster_path }}" class="w-12 h-18 object-cover rounded">
+                            {% else %}
+                            <div class="w-12 h-18 bg-gray-600 rounded flex items-center justify-center text-xs">No img</div>
+                            {% endif %}
+                        </td>
+                        <td class="p-4 font-bold">{{ movie.title }}</td>
+                        <td class="p-4">{{ movie.release_date|slice:":4" }}</td>
+                        <td class="p-4">
+                            <a href="{% url 'admin_delete_movie' movie.id %}" 
+                               onclick="return confirm('ยืนยันที่จะลบหนังเรื่องนี้? ข้อมูลรีวิวที่เกี่ยวข้องจะหายไปทั้งหมด')"
+                               class="text-red-400 hover:text-red-500 font-bold text-sm bg-red-900/30 px-3 py-1 rounded border border-red-900/50">
+                               ลบ
+                            </a>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr><td colspan="4" class="p-8 text-center text-gray-500">ไม่พบข้อมูล</td></tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,89 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="flex flex-col md:flex-row gap-6">
+    <!-- Sidebar -->
+    <aside class="w-full md:w-64 bg-gray-800 p-6 rounded-xl h-fit">
+        <h2 class="text-xl font-bold text-yellow-500 mb-4">Admin Menu</h2>
+        <nav class="space-y-2">
+            <a href="{% url 'admin_dashboard' %}" class="block py-2 px-4 text-gray-400 hover:bg-gray-700 hover:text-white rounded transition">📊 ภาพรวม</a>
+            <a href="{% url 'admin_movies' %}" class="block py-2 px-4 text-gray-400 hover:bg-gray-700 hover:text-white rounded transition">🎬 จัดการหนัง</a>
+            <a href="{% url 'admin_moods' %}" class="block py-2 px-4 bg-gray-700 text-white rounded">🎭 จัดการอารมณ์</a>
+        </nav>
+    </aside>
+
+    <div class="flex-1">
+        <h1 class="text-3xl font-bold mb-6">จัดการหมวดหมู่อารมณ์</h1>
+
+        <div class="grid md:grid-cols-2 gap-8">
+            <!-- Form เพิ่ม/แก้ไข -->
+            <div class="bg-gray-800 p-6 rounded-xl shadow-lg h-fit">
+                <h2 class="text-xl font-bold mb-4 text-yellow-500">เพิ่ม / แก้ไขอารมณ์</h2>
+                <form method="post">
+                    {% csrf_token %}
+                    <input type="hidden" name="mood_id" id="mood_id_input">
+                    
+                    <div class="mb-4">
+                        <label class="block text-gray-400 mb-2">ชื่ออารมณ์ (พร้อม Emoji)</label>
+                        <input type="text" name="mood_name" id="mood_name_input" required placeholder="เช่น 😊 มีความสุข (Happy)"
+                               class="w-full p-3 bg-gray-900 border border-gray-700 rounded text-white focus:border-yellow-500 focus:outline-none">
+                        <p class="text-xs text-gray-500 mt-2">แนะนำให้ใส่ Emoji นำหน้า เพื่อความสวยงาม</p>
+                    </div>
+                    
+                    <div class="flex gap-2">
+                        <button type="submit" class="bg-green-600 hover:bg-green-700 text-white px-6 py-2 rounded font-bold transition flex-1">บันทึก</button>
+                        <button type="button" onclick="resetForm()" class="bg-gray-600 hover:bg-gray-700 text-white px-4 py-2 rounded transition">ล้างค่า</button>
+                    </div>
+                </form>
+            </div>
+
+            <!-- Moods List -->
+            <div class="bg-gray-800 rounded-xl shadow-lg overflow-hidden">
+                <table class="w-full text-left">
+                    <thead class="bg-gray-700 text-gray-300">
+                        <tr>
+                            <th class="p-4">Name</th>
+                            <th class="p-4 text-right">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for mood in moods %}
+                        <tr class="border-b border-gray-700 hover:bg-gray-700 transition group">
+                            <td class="p-4 text-lg">{{ mood.name }}</td>
+                            <td class="p-4 text-right space-x-2">
+                                <!-- ปุ่ม Edit (ใช้ JS ยัดค่าเข้า Form) -->
+                                <button onclick="editMood('{{ mood.id }}', '{{ mood.name|escapejs }}')" 
+                                        class="text-blue-400 hover:text-blue-300 font-bold text-sm bg-blue-900/30 px-3 py-1 rounded border border-blue-900/50">
+                                    แก้ไข
+                                </button>
+                                
+                                <a href="{% url 'admin_delete_mood' mood.id %}" 
+                                   onclick="return confirm('ยืนยันที่จะลบ?')"
+                                   class="text-red-400 hover:text-red-500 font-bold text-sm bg-red-900/30 px-3 py-1 rounded border border-red-900/50">
+                                   ลบ
+                                </a>
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr><td colspan="2" class="p-8 text-center text-gray-500">ยังไม่มีข้อมูล</td></tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    function editMood(id, name) {
+        document.getElementById('mood_id_input').value = id;
+        document.getElementById('mood_name_input').value = name;
+        document.getElementById('mood_name_input').focus();
+    }
+    
+    function resetForm() {
+        document.getElementById('mood_id_input').value = '';
+        document.getElementById('mood_name_input').value = '';
+    }
+</script>
+{% endblock %}

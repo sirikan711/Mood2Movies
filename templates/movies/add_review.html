@@ -1,0 +1,60 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="max-w-2xl mx-auto bg-gray-800 p-8 rounded-xl shadow-2xl">
+    <h2 class="text-3xl font-bold mb-6 text-yellow-500 flex items-center">
+        <span class="mr-2">🎭</span> แปะอารมณ์หนัง: {{ movie.title }}
+    </h2>
+    
+    <form method="post" class="space-y-6">
+        {% csrf_token %}
+        
+        <!-- Primary Mood -->
+        <div>
+            <label class="block text-lg font-semibold mb-2 text-gray-300">หนังเรื่องนี้ให้อารมณ์หลักอะไรกับคุณ?</label>
+            {{ form.primary_mood }}
+        </div>
+
+        <!-- Intensity (Slider) -->
+        <div>
+             <label class="block text-lg font-semibold mb-2 text-gray-300 flex justify-between">
+                <span>ความเข้มข้นของอารมณ์</span>
+                <span id="intensity-value" class="text-yellow-500 font-bold">3</span> <!-- Default value -->
+            </label>
+            <div class="flex items-center gap-4">
+                <span class="text-sm text-gray-400">น้อย (1)</span>
+                {{ form.mood_intensity }}
+                <span class="text-sm text-gray-400">มาก (5)</span>
+            </div>
+        </div>
+
+        <!-- Rating -->
+        <div>
+            <label class="block text-lg font-semibold mb-2 text-gray-300">คะแนนความชอบส่วนตัว (เต็ม 10)</label>
+            {{ form.rating }}
+        </div>
+
+        <!-- Review Text -->
+        <div>
+            <label class="block text-lg font-semibold mb-2 text-gray-300">เล่าเพิ่มเติม (ถ้าอยากเล่า)</label>
+            {{ form.review_text }}
+        </div>
+
+        <button type="submit" class="w-full bg-yellow-500 hover:bg-yellow-600 text-gray-900 font-bold py-3 px-6 rounded-lg transition duration-300 transform hover:scale-[1.02]">
+            บันทึกความรู้สึก
+        </button>
+    </form>
+</div>
+
+<script>
+    // Script ง่ายๆ เพื่อโชว์ตัวเลข Slider แบบ Real-time
+    const slider = document.querySelector('input[type="range"]');
+    const output = document.getElementById('intensity-value');
+    if (slider && output) {
+        output.textContent = slider.value;
+        slider.oninput = function() {
+            output.textContent = this.value;
+        }
+    }
+</script>
+{% endblock %}

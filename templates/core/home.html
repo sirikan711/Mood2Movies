@@ -1,0 +1,65 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="text-center mb-12">
+    <h1 class="text-4xl md:text-6xl font-bold mb-4">วันนี้คุณรู้สึกแบบไหน?</h1>
+    <p class="text-xl text-gray-300">เลือกอารมณ์ของคุณ แล้วเราจะแนะนำหนังที่ใช่ให้คุณเอง</p>
+</div>
+
+<!-- Mood Selection Grid (ส่วนเดิม) -->
+<div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6 max-w-4xl mx-auto mb-16">
+    {% for mood in moods %}
+    <a href="{% url 'mood_recommendation' mood.id %}" class="mood-card transform hover:scale-105 transition duration-300 h-full">
+        <div class="bg-gray-800 rounded-xl p-6 text-center border-2 border-transparent hover:border-yellow-500 cursor-pointer shadow-lg h-full flex flex-col justify-center items-center min-h-[180px]">
+            <span class="text-5xl mb-4 filter drop-shadow-lg">
+                {% if 'Happy' in mood.name %}😊
+                {% elif 'Sad' in mood.name %}😭
+                {% elif 'Scary' in mood.name %}😨
+                {% elif 'Surprised' in mood.name %}😲
+                {% elif 'Heartwarming' in mood.name %}🥰
+                {% elif 'Tense' in mood.name %}😬
+                {% elif 'Funny' in mood.name %}🤣
+                {% elif 'Relaxing' in mood.name %}😌
+                {% else %}🎬{% endif %}
+            </span>
+            <h3 class="text-lg md:text-xl font-semibold break-words leading-tight px-2">
+                {{ mood.name }}
+            </h3>
+        </div>
+    </a>
+    {% empty %}
+        <p class="col-span-full text-center text-gray-500 py-12 text-xl bg-gray-800 rounded-xl border-2 border-dashed border-gray-700">
+            ยังไม่มีข้อมูลอารมณ์ในระบบ (กรุณาเพิ่มใน Admin)
+        </p>
+    {% endfor %}
+</div>
+
+<!-- Popular Movies Section (ส่วนใหม่) -->
+{% if popular_movies %}
+<div class="max-w-6xl mx-auto mt-16 pt-16 border-t border-gray-800">
+    <h2 class="text-3xl font-bold mb-8 flex items-center">
+        <span class="mr-2">🔥</span> หนังยอดนิยมตอนนี้
+    </h2>
+    
+    <!-- ใช้ Grid แสดงหนังยอดนิยม -->
+    <!-- เพิ่ม overflow-x-auto สำหรับมือถือเพื่อให้เลื่อนแนวนอนได้ -->
+    <div class="flex overflow-x-auto pb-4 space-x-6 lg:grid lg:grid-cols-5 lg:space-x-0 lg:gap-6 scrollbar-hide">
+        {% for movie in popular_movies %}
+        <a href="{% url 'movie_detail' movie.tmdb_id %}" class="flex-shrink-0 w-40 lg:w-auto block bg-gray-800 rounded-lg overflow-hidden shadow-lg hover:shadow-2xl transition duration-300 transform hover:-translate-y-2">
+            <img src="{{ movie.poster_url }}" alt="{{ movie.title }}" class="w-full h-60 object-cover">
+            <div class="p-3">
+                <h3 class="font-bold text-sm truncate">{{ movie.title }}</h3>
+                <div class="flex items-center justify-between mt-1">
+                     <span class="text-xs text-gray-400">{{ movie.release_date|slice:":4" }}</span>
+                     <span class="text-xs bg-yellow-500 text-gray-900 px-1.5 py-0.5 rounded font-bold">
+                        ★ {{ movie.vote_average|floatformat:1 }}
+                     </span>
+                </div>
+            </div>
+        </a>
+        {% endfor %}
+    </div>
+</div>
+{% endif %}
+
+{% endblock %}

@@ -2,83 +2,144 @@
 
 {% block content %}
 <div class="max-w-6xl mx-auto">
+    
     <!-- Header Profile -->
-    <div class="bg-gray-800 p-8 rounded-xl shadow-2xl mb-8 flex items-center">
-        <div class="w-24 h-24 bg-yellow-500 rounded-full flex items-center justify-center text-4xl font-bold text-gray-900 mr-6">
-            {{ profile_user.username|slice:":1"|upper }}
+    <div class="bg-gray-800 p-6 md:p-10 rounded-xl shadow-2xl mb-8 border border-gray-700 flex flex-col md:flex-row items-center md:items-start justify-between gap-6">
+        
+        <!-- Profile Info -->
+        <div class="flex flex-col md:flex-row items-center text-center md:text-left w-full">
+            <!-- Avatar -->
+            <div class="w-32 h-32 rounded-full overflow-hidden border-4 border-yellow-500 shadow-lg flex-shrink-0 mb-4 md:mb-0 md:mr-8 relative bg-gray-700">
+                {% if profile_user.profile.avatar %}
+                    <img src="{{ profile_user.profile.avatar.url }}" class="w-full h-full object-cover">
+                {% else %}
+                    <div class="w-full h-full bg-yellow-500 flex items-center justify-center text-5xl font-bold text-gray-900">
+                        {{ profile_user.username|slice:":1"|upper }}
+                    </div>
+                {% endif %}
+            </div>
+            
+            <!-- Text Info -->
+            <div class="flex-1">
+                <h1 class="text-3xl md:text-4xl font-bold text-white mb-1">
+                    {{ profile_user.first_name }} {{ profile_user.last_name }}
+                </h1>
+                <p class="text-yellow-500 font-semibold text-lg mb-2">@{{ profile_user.username }}</p>
+                
+                {% if profile_user.profile.bio %}
+                    <p class="text-gray-300 italic mb-3 max-w-xl">"{{ profile_user.profile.bio }}"</p>
+                {% else %}
+                    <p class="text-gray-500 italic mb-3 text-sm">(ยังไม่ได้เขียนแนะนำตัว)</p>
+                {% endif %}
+
+                <div class="flex flex-wrap justify-center md:justify-start gap-4 text-sm text-gray-400 mt-2">
+                    <span class="flex items-center bg-gray-700/50 px-3 py-1 rounded-full">
+                        📅 สมาชิกเมื่อ {{ profile_user.date_joined|date:"M Y" }}
+                    </span>
+                    <span class="flex items-center bg-gray-700/50 px-3 py-1 rounded-full">
+                        ✍️ {{ profile_user.reviews.count }} รีวิว
+                    </span>
+                </div>
+            </div>
         </div>
-        <div>
-            <h1 class="text-3xl font-bold">{{ profile_user.username }}</h1>
-            <p class="text-gray-400">สมาชิกตั้งแต่ {{ profile_user.date_joined|date:"F Y" }}</p>
+
+        <!-- Edit Button (Show ONLY for owner) -->
+        <!-- เช็คว่า User ที่ล็อกอินอยู่ คือคนเดียวกับเจ้าของโปรไฟล์นี้ไหม -->
+        {% if request.user == profile_user %}
+        <div class="flex-shrink-0">
+            <a href="{% url 'edit_profile' %}" class="inline-flex items-center px-4 py-2 bg-gray-700 hover:bg-gray-600 text-white font-semibold rounded-lg transition border border-gray-600 hover:border-gray-500 shadow-sm">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+                </svg>
+                แก้ไขโปรไฟล์
+            </a>
         </div>
+        {% endif %}
     </div>
 
-    <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
-        <!-- Left Column: Reviews -->
-        <div class="md:col-span-2 space-y-8">
-            <h2 class="text-2xl font-bold mb-4 flex items-center">
-                <span class="mr-2">📝</span> รีวิวล่าสุด
-            </h2>
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        <!-- Left Column: Reviews (2/3 Width) -->
+        <div class="lg:col-span-2 space-y-6">
+            <div class="flex items-center justify-between mb-4">
+                <h2 class="text-2xl font-bold flex items-center">
+                    <span class="bg-yellow-500 w-2 h-8 mr-3 rounded-sm"></span>
+                    รีวิวล่าสุด
+                </h2>
+            </div>
+
             {% for review in recent_reviews %}
-            <div class="bg-gray-800 p-4 rounded-lg border border-gray-700">
-                <div class="flex justify-between mb-2">
-                    <a href="{% url 'movie_detail' review.movie.tmdb_id %}" class="font-bold text-yellow-500 hover:underline">
-                        {{ review.movie.title }}
-                    </a>
-                    <span class="text-sm text-gray-500">{{ review.created_at|date:"d M Y" }}</span>
+            <div class="bg-gray-800 p-5 rounded-xl border border-gray-700 hover:border-gray-600 transition shadow-lg">
+                <div class="flex justify-between items-start mb-3">
+                    <div>
+                        <a href="{% url 'movie_detail' review.movie.tmdb_id %}" class="text-xl font-bold text-yellow-500 hover:underline hover:text-yellow-400 transition">
+                            {{ review.movie.title }}
+                        </a>
+                        <p class="text-xs text-gray-500 mt-1">{{ review.created_at|date:"d M Y, H:i" }}</p>
+                    </div>
+                    <span class="bg-gray-700 text-yellow-400 px-2 py-1 rounded font-bold text-sm border border-gray-600">
+                        ★ {{ review.rating }}
+                    </span>
                 </div>
+
                 {% if review.primary_mood %}
-                <span class="inline-block bg-blue-900 text-blue-200 text-xs px-2 py-1 rounded-full mb-2">
-                    {{ review.primary_mood.name }} ({{ review.mood_intensity }}/5)
-                </span>
+                <div class="mb-3">
+                    <span class="inline-flex items-center bg-blue-900/30 text-blue-200 text-xs px-2 py-1 rounded border border-blue-500/30">
+                        {{ review.primary_mood }} ({{ review.mood_intensity }}/5)
+                    </span>
+                </div>
                 {% endif %}
+
                 {% if review.review_text %}
-                <p class="text-gray-300 italic">"{{ review.review_text|truncatechars:100 }}"</p>
+                <p class="text-gray-300 text-sm leading-relaxed">"{{ review.review_text|truncatechars:150 }}"</p>
                 {% endif %}
             </div>
             {% empty %}
-                <p class="text-gray-500 italic">ยังไม่มีรีวิว</p>
+                <div class="text-center py-12 bg-gray-800/50 rounded-xl border-2 border-dashed border-gray-700">
+                    <p class="text-gray-500">ยังไม่มีรีวิว เริ่มรีวิวหนังเรื่องแรกของคุณเลย!</p>
+                    <a href="{% url 'search_movies' %}" class="text-yellow-500 hover:underline mt-2 inline-block text-sm">ไปค้นหาหนัง</a>
+                </div>
             {% endfor %}
         </div>
 
-        <!-- Right Column: Lists -->
+        <!-- Right Column: Lists (1/3 Width) -->
         <div class="space-y-8">
+            
             <!-- Favorites -->
-            <div>
-                <h2 class="text-xl font-bold mb-4 flex items-center">
+            <div class="bg-gray-800 p-6 rounded-xl border border-gray-700 shadow-lg">
+                <h2 class="text-xl font-bold mb-4 flex items-center text-pink-400">
                     <span class="mr-2">❤️</span> หนังโปรด
                 </h2>
-                <div class="grid grid-cols-3 gap-2">
+                <div class="grid grid-cols-3 gap-3">
                     {% for fav in favorites %}
-                    <a href="{% url 'movie_detail' fav.movie.tmdb_id %}" title="{{ fav.movie.title }}">
+                    <a href="{% url 'movie_detail' fav.movie.tmdb_id %}" class="group relative block aspect-[2/3] bg-gray-700 rounded overflow-hidden" title="{{ fav.movie.title }}">
                         {% if fav.movie.poster_path %}
-                        <img src="https://image.tmdb.org/t/p/w200{{ fav.movie.poster_path }}" class="w-full h-24 object-cover rounded hover:opacity-75 transition">
+                        <img src="https://image.tmdb.org/t/p/w200{{ fav.movie.poster_path }}" class="w-full h-full object-cover group-hover:scale-110 transition duration-500">
                         {% else %}
-                        <div class="w-full h-24 bg-gray-700 rounded flex items-center justify-center text-xs">No Image</div>
+                        <div class="w-full h-full flex items-center justify-center text-xs text-gray-500">No Img</div>
                         {% endif %}
                     </a>
                     {% empty %}
-                    <p class="col-span-3 text-gray-500 text-sm">ยังไม่มีหนังโปรด</p>
+                    <p class="col-span-3 text-center text-gray-500 text-sm py-4">ยังไม่มีหนังโปรด</p>
                     {% endfor %}
                 </div>
             </div>
 
             <!-- Bookmarks -->
-            <div>
-                <h2 class="text-xl font-bold mb-4 flex items-center">
+            <div class="bg-gray-800 p-6 rounded-xl border border-gray-700 shadow-lg">
+                <h2 class="text-xl font-bold mb-4 flex items-center text-blue-400">
                     <span class="mr-2">🔖</span> ดูภายหลัง
                 </h2>
-                <div class="grid grid-cols-3 gap-2">
+                <div class="grid grid-cols-3 gap-3">
                     {% for bookmark in bookmarks %}
-                    <a href="{% url 'movie_detail' bookmark.movie.tmdb_id %}" title="{{ bookmark.movie.title }}">
+                    <a href="{% url 'movie_detail' bookmark.movie.tmdb_id %}" class="group relative block aspect-[2/3] bg-gray-700 rounded overflow-hidden" title="{{ bookmark.movie.title }}">
                          {% if bookmark.movie.poster_path %}
-                        <img src="https://image.tmdb.org/t/p/w200{{ bookmark.movie.poster_path }}" class="w-full h-24 object-cover rounded hover:opacity-75 transition">
+                        <img src="https://image.tmdb.org/t/p/w200{{ bookmark.movie.poster_path }}" class="w-full h-full object-cover group-hover:scale-110 transition duration-500">
                         {% else %}
-                        <div class="w-full h-24 bg-gray-700 rounded flex items-center justify-center text-xs">No Image</div>
+                        <div class="w-full h-full flex items-center justify-center text-xs text-gray-500">No Img</div>
                         {% endif %}
                     </a>
                     {% empty %}
-                    <p class="col-span-3 text-gray-500 text-sm">ยังไม่มีรายการดูภายหลัง</p>
+                    <p class="col-span-3 text-center text-gray-500 text-sm py-4">ยังไม่มีรายการดูภายหลัง</p>
                     {% endfor %}
                 </div>
             </div>

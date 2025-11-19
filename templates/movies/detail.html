@@ -70,28 +70,57 @@
         {% if reviews %}
             <div class="grid gap-6 md:grid-cols-2">
                 {% for review in reviews %}
-                <div class="bg-gray-800 p-6 rounded-xl shadow-md border border-gray-700 hover:border-gray-600 transition">
+                <div class="bg-gray-800 p-6 rounded-xl shadow-md border border-gray-700 hover:border-gray-600 transition relative group">
+                    
+                    <!-- ส่วนหัวรีวิว -->
                     <div class="flex justify-between items-start mb-4">
                         <div class="flex items-center">
-                            <div class="w-10 h-10 bg-gradient-to-br from-yellow-400 to-yellow-600 rounded-full flex items-center justify-center font-bold text-gray-900 mr-3 shadow-sm">
-                                {{ review.user.username|slice:":1"|upper }}
+                            <!-- Avatar/Initial -->
+                            <div class="w-10 h-10 bg-gradient-to-br from-yellow-400 to-yellow-600 rounded-full flex items-center justify-center font-bold text-gray-900 mr-3 shadow-sm overflow-hidden">
+                                {% if review.user.profile.avatar %}
+                                    <img src="{{ review.user.profile.avatar.url }}" class="w-full h-full object-cover">
+                                {% else %}
+                                    {{ review.user.username|slice:":1"|upper }}
+                                {% endif %}
                             </div>
                             <div>
                                 <h4 class="font-bold text-gray-200">{{ review.user.username }}</h4>
                                 <p class="text-xs text-gray-500">{{ review.created_at|date:"d M Y" }}</p>
                             </div>
                         </div>
-                        {% if review.rating %}
-                        <div class="bg-gray-900/50 px-3 py-1 rounded-full text-sm font-bold text-yellow-400 border border-yellow-500/30">
-                            ★ {{ review.rating|floatformat:1 }}
+                        
+                        <!-- Rating & Actions Container -->
+                        <div class="flex items-center gap-3">
+                            {% if review.rating %}
+                            <div class="bg-gray-900/50 px-3 py-1 rounded-full text-sm font-bold text-yellow-400 border border-yellow-500/30">
+                                ★ {{ review.rating|floatformat:1 }}
+                            </div>
+                            {% endif %}
+
+                            <!-- ปุ่มแก้ไข/ลบ (เพิ่มส่วนนี้เข้าไปครับ) -->
+                            {% if request.user == review.user %}
+                            <div class="flex items-center gap-1">
+                                <a href="{% url 'edit_review' review.id %}" class="text-gray-400 hover:text-blue-400 p-1 transition" title="แก้ไข">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+                                    </svg>
+                                </a>
+                                <a href="{% url 'delete_review' review.id %}" 
+                                   onclick="return confirm('ต้องการลบรีวิวนี้จริงๆ หรือ?')"
+                                   class="text-gray-400 hover:text-red-400 p-1 transition" title="ลบ">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                    </svg>
+                                </a>
+                            </div>
+                            {% endif %}
                         </div>
-                        {% endif %}
                     </div>
 
+                    <!-- Mood Badge -->
                     {% if review.primary_mood %}
                     <div class="mb-4">
                         <span class="inline-flex items-center bg-blue-900/50 text-blue-200 text-sm px-3 py-1.5 rounded-lg font-semibold tracking-wide border border-blue-500/30">
-                            <!-- แสดง Emoji หน้า Mood ในรีวิวด้วย -->
                             <span class="mr-1.5">
                                 {% if 'Happy' in review.primary_mood.name %}😊
                                 {% elif 'Sad' in review.primary_mood.name %}😭
@@ -108,6 +137,7 @@
                     </div>
                     {% endif %}
 
+                    <!-- Comment -->
                     {% if review.review_text %}
                     <p class="text-gray-300 italic leading-relaxed">"{{ review.review_text }}"</p>
                     {% else %}
@@ -134,7 +164,6 @@ document.addEventListener('DOMContentLoaded', function() {
     const bookmarkBtn = document.getElementById('bookmark-btn');
 
     async function toggleAction(url, btn, iconSpan, textSpan, activeClass, activeIcon, inactiveIcon, activeText, inactiveText) {
-        // ป้องกันการกดรัวๆ
         if (btn.disabled) return;
         btn.disabled = true;
         btn.style.opacity = '0.7';

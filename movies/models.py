@@ -1,7 +1,10 @@
-# movies/models.py
 from django.db import models
 from django.contrib.auth.models import User
 from django.core.validators import MinValueValidator, MaxValueValidator
+from django.db.models.signals import post_save
+from django.dispatch import receiver
+
+# --- 1. Core Models ---
 
 class Movie(models.Model):
     tmdb_id = models.IntegerField(unique=True)
@@ -17,7 +20,7 @@ class Mood(models.Model):
     name = models.CharField(max_length=50, unique=True)
 
     def __str__(self):
-        # กำหนด Emoji ตามชื่อ Mood
+        # Auto-add emoji if contained in name string
         emoji = ''
         if 'Happy' in self.name: emoji = '😊'
         elif 'Sad' in self.name: emoji = '😭'
@@ -28,8 +31,9 @@ class Mood(models.Model):
         elif 'Funny' in self.name: emoji = '🤣'
         elif 'Relaxing' in self.name: emoji = '😌'
         else: emoji = '🎬'
-        
-        return f"{emoji} {self.name}" # คืนค่าเป็น "😊 มีความสุข (Happy)"
+        return f"{emoji} {self.name}"
+
+# --- 2. User Interaction Models ---
 
 class Review(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='reviews')
@@ -41,24 +45,22 @@ class Review(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
-        unique_together = ('user', 'movie') # 1 คนรีวิวหนังเรื่องเดิมได้แค่ครั้งเดียว
+        unique_together = ('user', 'movie')
 
     def __str__(self):
         return f"{self.user.username} reviewed {self.movie.title}"
-    
-# 1. รายการหนังโปรด (Favorite)
+
 class Favorite(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='favorites')
     movie = models.ForeignKey(Movie, on_delete=models.CASCADE, related_name='favorited_by')
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
-        unique_together = ('user', 'movie') # 1 คน fav หนังเรื่องเดิมได้ครั้งเดียว
+        unique_together = ('user', 'movie')
 
     def __str__(self):
         return f"{self.user.username} favs {self.movie.title}"
 
-# 2. บุ๊กมาร์ก/ดูภายหลัง (Bookmark/Watchlist)
 class Bookmark(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='bookmarks')
     movie = models.ForeignKey(Movie, on_delete=models.CASCADE, related_name='bookmarked_by')
@@ -70,14 +72,35 @@ class Bookmark(models.Model):
     def __str__(self):
         return f"{self.user.username} bookmarked {self.movie.title}"
 
-# 3. รายการส่วนตัว (Custom List) - แบบง่าย
 class CustomList(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='custom_lists')
     name = models.CharField(max_length=100)
     description = models.TextField(blank=True)
     movies = models.ManyToManyField(Movie, related_name='contained_in_lists', blank=True)
-    is_public = models.BooleanField(default=True) # เผื่ออนาคตอยากให้แชร์ได้
+    is_public = models.BooleanField(default=True)
     created_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
         return f"{self.name} by {self.user.username}"
+
+# --- 3. User Profile & Signals ---
+
+class Profile(models.Model):
+    user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='profile')
+    bio = models.TextField(max_length=500, blank=True)
+    avatar = models.ImageField(upload_to='avatars/', null=True, blank=True)
+    
+    def __str__(self):
+        return f'{self.user.username} Profile'
+
+@receiver(post_save, sender=User)
+def create_user_profile(sender, instance, created, **kwargs):
+    if created:
+        Profile.objects.create(user=instance)
+
+@receiver(post_save, sender=User)
+def save_user_profile(sender, instance, **kwargs):
+    try:
+        instance.profile.save()
+    except Profile.DoesNotExist:
+        Profile.objects.create(user=instance)

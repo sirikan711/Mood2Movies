@@ -1,0 +1,104 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="max-w-2xl mx-auto">
+    <h1 class="text-3xl font-bold mb-8 text-center">แก้ไขข้อมูลส่วนตัว ✏️</h1>
+
+    <!-- แสดง Error รวม (ถ้ามี) -->
+    {% if u_form.errors or p_form.errors %}
+        <div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative mb-6" role="alert">
+            <strong class="font-bold">เกิดข้อผิดพลาด!</strong>
+            <span class="block sm:inline">กรุณาตรวจสอบข้อมูลด้านล่าง</span>
+            {% if u_form.non_field_errors %}
+                <div class="mt-2">{{ u_form.non_field_errors }}</div>
+            {% endif %}
+            {% if p_form.non_field_errors %}
+                <div class="mt-2">{{ p_form.non_field_errors }}</div>
+            {% endif %}
+        </div>
+    {% endif %}
+
+    <div class="bg-gray-800 p-8 rounded-xl shadow-2xl border border-gray-700">
+        
+        <!-- แสดงรูปปัจจุบัน -->
+        <div class="flex justify-center mb-8">
+            <div class="relative group">
+                <div class="w-32 h-32 rounded-full overflow-hidden border-4 border-yellow-500">
+                    {% if user.profile.avatar %}
+                        <img src="{{ user.profile.avatar.url }}" class="w-full h-full object-cover">
+                    {% else %}
+                        <div class="w-full h-full bg-yellow-500 flex items-center justify-center text-5xl font-bold text-gray-900">
+                            {{ user.username|slice:":1"|upper }}
+                        </div>
+                    {% endif %}
+                </div>
+                <div class="absolute bottom-0 right-0 bg-gray-700 p-2 rounded-full border border-gray-500">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" />
+                    </svg>
+                </div>
+            </div>
+        </div>
+
+        <form method="POST" enctype="multipart/form-data" class="space-y-6">
+            {% csrf_token %}
+            
+            <!-- ส่วนข้อมูล User (Username, Email, ชื่อ) -->
+            <div class="border-b border-gray-700 pb-6 mb-6">
+                <h2 class="text-xl font-semibold text-yellow-500 mb-4">ข้อมูลบัญชี</h2>
+                
+                <div class="grid md:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-sm text-gray-400 mb-1">Username</label>
+                        {{ u_form.username }}
+                        <div class="text-red-500 text-xs mt-1">{{ u_form.username.errors }}</div>
+                    </div>
+                    <div>
+                        <label class="block text-sm text-gray-400 mb-1">Email</label>
+                        {{ u_form.email }}
+                        <div class="text-red-500 text-xs mt-1">{{ u_form.email.errors }}</div>
+                    </div>
+                    <div>
+                        <label class="block text-sm text-gray-400 mb-1">ชื่อจริง</label>
+                        {{ u_form.first_name }}
+                        <div class="text-red-500 text-xs mt-1">{{ u_form.first_name.errors }}</div>
+                    </div>
+                    <div>
+                        <label class="block text-sm text-gray-400 mb-1">นามสกุล</label>
+                        {{ u_form.last_name }}
+                        <div class="text-red-500 text-xs mt-1">{{ u_form.last_name.errors }}</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ส่วนข้อมูล Profile (Bio, รูป) -->
+            <div>
+                <h2 class="text-xl font-semibold text-yellow-500 mb-4">ข้อมูลเพิ่มเติม</h2>
+                
+                <div class="mb-4">
+                    <label class="block text-sm text-gray-400 mb-1">คำแนะนำตัว (Bio)</label>
+                    {{ p_form.bio }}
+                    <div class="text-red-500 text-xs mt-1">{{ p_form.bio.errors }}</div>
+                </div>
+
+                <div class="mb-4">
+                    <label class="block text-sm text-gray-400 mb-1">รูปโปรไฟล์</label>
+                    {{ p_form.avatar }}
+                    <p class="text-xs text-gray-500 mt-1">รองรับไฟล์ .jpg, .png ขนาดไม่เกิน 5MB</p>
+                    <div class="text-red-500 text-xs mt-1">{{ p_form.avatar.errors }}</div>
+                </div>
+            </div>
+
+            <div class="flex gap-4 pt-4">
+                <button type="submit" class="flex-1 bg-yellow-500 hover:bg-yellow-400 text-gray-900 font-bold py-3 px-4 rounded-lg transition transform hover:scale-[1.02] shadow-lg">
+                    บันทึกการเปลี่ยนแปลง
+                </button>
+                <a href="{% url 'profile' %}" class="px-6 py-3 rounded-lg border border-gray-600 text-gray-400 hover:bg-gray-700 hover:text-white transition">
+                    ยกเลิก
+                </a>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

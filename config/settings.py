@@ -80,8 +80,12 @@ WSGI_APPLICATION = 'config.wsgi.application'
 
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
+        'ENGINE': 'django.db.backends.postgresql',
+        'NAME': 'mood2movie_db',      # ชื่อ DB ที่สร้าง
+        'USER': 'postgres',
+        'PASSWORD': '1234',
+        'HOST': 'localhost',          # รันในเครื่องตัวเอง
+        'PORT': '5432',               # Port มาตรฐาน
     }
 }
 

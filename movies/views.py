@@ -3,7 +3,7 @@ from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
 from django.contrib.admin.views.decorators import staff_member_required
 from django.contrib import messages
-from django.db.models import Count, Avg, Q, F # <--- เพิ่ม F ตรงนี้
+from django.db.models import Count, Avg, Q, F  # <--- เพิ่ม F เข้ามาตรงนี้
 from django.http import JsonResponse
 from django.views.decorators.http import require_POST
 from django.contrib.auth.models import User
@@ -12,8 +12,12 @@ from .models import Movie, Review, Mood, Favorite, Bookmark
 from .forms import ReviewForm
 from .utils import search_movies_tmdb, get_movie_details_tmdb, get_tmdb_genres
 
-# ... (ส่วน search_movies และ movie_detail เหมือนเดิม) ...
+# ==========================================
+# 1. PUBLIC VIEWS (ค้นหา, รายละเอียด, แนะนำ)
+# ==========================================
+
 def search_movies(request):
+    """ค้นหาภาพยนตร์ (รองรับชื่อ, อารมณ์, ปี, ประเภท)"""
     query = request.GET.get('q', '').strip()
     mood_id = request.GET.get('mood')
     year = request.GET.get('year')
@@ -22,6 +26,7 @@ def search_movies(request):
     movies = []
     search_source = ""
 
+    # Case 1: ค้นหาจาก Local DB (เมื่อมีการเลือก Mood)
     if mood_id:
         search_source = "local"
         mood = get_object_or_404(Mood, id=mood_id)
@@ -33,19 +38,24 @@ def search_movies(request):
             movies_qs = movies_qs.filter(release_date__year=year)
             
         for m in movies_qs:
+            # คำนวณ Rating เฉลี่ยจากรีวิวในระบบเรา
+            local_rating = m.reviews.aggregate(Avg('rating'))['rating__avg']
+            
             movies.append({
                 'tmdb_id': m.tmdb_id,
                 'title': m.title,
                 'release_date': str(m.release_date) if m.release_date else 'N/A',
                 'poster_url': f"https://image.tmdb.org/t/p/w500{m.poster_path}" if m.poster_path else None,
                 'overview': m.overview,
-                'local_rating': m.reviews.aggregate(Avg('rating'))['rating__avg']
+                'local_rating': local_rating
             })
 
+    # Case 2: ค้นหาจาก TMDb API (เมื่อไม่มี Mood)
     elif query or genre_id or year:
         search_source = "tmdb"
         movies = search_movies_tmdb(query, year=year, genre_id=genre_id)
 
+    # เตรียมข้อมูลสำหรับ Dropdown
     moods = Mood.objects.all()
     tmdb_genres = get_tmdb_genres()
     current_year = datetime.date.today().year
@@ -64,18 +74,25 @@ def search_movies(request):
     })
 
 def movie_detail(request, tmdb_id):
+    """แสดงรายละเอียดภาพยนตร์และรีวิว"""
+    # พยายามหาหนังใน DB เราก่อน
     movie = Movie.objects.filter(tmdb_id=tmdb_id).first()
+    
+    # ดึงข้อมูลสดจาก TMDb เสมอเพื่อความชัวร์เรื่องรายละเอียด
     tmdb_data = get_movie_details_tmdb(tmdb_id)
     
     if not tmdb_data:
          return render(request, '404.html')
     
     reviews = []
+    similar_movies = [] # เผื่ออนาคตทำระบบแนะนำเพิ่มเติม
     is_favorited = False
     is_bookmarked = False
 
     if movie:
+        # ดึงรีวิวพร้อมข้อมูล User และ Profile เพื่อลด Query
         reviews = movie.reviews.select_related('user', 'user__profile', 'primary_mood').order_by('-created_at')
+        
         if request.user.is_authenticated:
             is_favorited = Favorite.objects.filter(user=request.user, movie=movie).exists()
             is_bookmarked = Bookmark.objects.filter(user=request.user, movie=movie).exists()
@@ -90,16 +107,18 @@ def movie_detail(request, tmdb_id):
     return render(request, 'movies/detail.html', context)
 
 def mood_recommendation(request, mood_id):
+    """แนะนำหนังตามอารมณ์"""
     mood = get_object_or_404(Mood, id=mood_id)
     
+    # สูตรคำนวณ Mood Score
     recommended_movies = Movie.objects.filter(
         reviews__primary_mood=mood
     ).annotate(
         mood_count=Count('reviews', filter=Q(reviews__primary_mood=mood)),
         avg_intensity=Avg('reviews__mood_intensity', filter=Q(reviews__primary_mood=mood))
     ).annotate(
-        # ใช้ F() โดยตรง ไม่ต้อง models.F()
-        mood_score=F('mood_count') * F('avg_intensity') 
+        # ใช้ F() ตรงๆ แทน models.F()
+        mood_score=F('mood_count') * F('avg_intensity')
     ).order_by('-mood_score')[:20]
 
     return render(request, 'movies/recommendation.html', {
@@ -107,9 +126,13 @@ def mood_recommendation(request, mood_id):
         'movies': recommended_movies
     })
 
-# ... (ส่วน User Actions และ Admin เหมือนเดิม ไม่ต้องแก้) ...
+# ==========================================
+# 2. USER ACTIONS (รีวิว, Fav, Bookmark)
+# ==========================================
+
 @login_required
 def add_review(request, tmdb_id):
+    """เพิ่มรีวิวใหม่"""
     movie = Movie.objects.filter(tmdb_id=tmdb_id).first()
     if not movie:
         tmdb_data = get_movie_details_tmdb(tmdb_id)
@@ -146,6 +169,7 @@ def add_review(request, tmdb_id):
 
 @login_required
 def edit_review(request, review_id):
+    """แก้ไขรีวิว (เฉพาะเจ้าของ)"""
     review = get_object_or_404(Review, id=review_id)
     
     if request.user != review.user:
@@ -169,6 +193,7 @@ def edit_review(request, review_id):
 
 @login_required
 def delete_review(request, review_id):
+    """ลบุรีวิว (เฉพาะเจ้าของ)"""
     review = get_object_or_404(Review, id=review_id)
     tmdb_id = review.movie.tmdb_id
     
@@ -183,6 +208,7 @@ def delete_review(request, review_id):
 @login_required
 @require_POST
 def toggle_favorite(request, tmdb_id):
+    """Toggle Favorite (AJAX)"""
     movie = Movie.objects.filter(tmdb_id=tmdb_id).first()
     if not movie:
         tmdb_data = get_movie_details_tmdb(tmdb_id)
@@ -209,6 +235,7 @@ def toggle_favorite(request, tmdb_id):
 @login_required
 @require_POST
 def toggle_bookmark(request, tmdb_id):
+    """Toggle Bookmark (AJAX)"""
     movie = Movie.objects.filter(tmdb_id=tmdb_id).first()
     if not movie:
         tmdb_data = get_movie_details_tmdb(tmdb_id)
@@ -232,9 +259,13 @@ def toggle_bookmark(request, tmdb_id):
 
     return JsonResponse({'status': status})
 
-# ... (ส่วน Admin เหมือนเดิม) ...
+# ==========================================
+# 3. CUSTOM ADMIN DASHBOARD (สำหรับ Superuser)
+# ==========================================
+
 @staff_member_required(login_url='login')
 def admin_dashboard(request):
+    """หน้า Dashboard หลัก"""
     total_movies = Movie.objects.count()
     total_reviews = Review.objects.count()
     total_users = User.objects.count()
@@ -249,6 +280,7 @@ def admin_dashboard(request):
 
 @staff_member_required(login_url='login')
 def admin_movies(request):
+    """จัดการภาพยนตร์"""
     movies = Movie.objects.all().order_by('-id')
     query = request.GET.get('q')
     if query:
@@ -258,6 +290,7 @@ def admin_movies(request):
 
 @staff_member_required(login_url='login')
 def admin_moods(request):
+    """จัดการอารมณ์"""
     moods = Mood.objects.all()
     
     if request.method == 'POST':
@@ -278,6 +311,7 @@ def admin_moods(request):
 
 @staff_member_required(login_url='login')
 def admin_reviews(request):
+    """จัดการรีวิว"""
     reviews = Review.objects.select_related('user', 'movie', 'primary_mood').order_by('-created_at')
     query = request.GET.get('q')
     if query:
@@ -288,6 +322,8 @@ def admin_reviews(request):
         )
 
     return render(request, 'movies/admin/reviews.html', {'reviews': reviews, 'query': query})
+
+# --- Admin Delete Actions ---
 
 @staff_member_required(login_url='login')
 def admin_delete_movie(request, movie_id):

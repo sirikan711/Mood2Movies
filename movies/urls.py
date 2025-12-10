@@ -12,7 +12,7 @@ urlpatterns = [
     path('movie/<int:tmdb_id>/favorite/', views.toggle_favorite, name='toggle_favorite'),
     path('movie/<int:tmdb_id>/bookmark/', views.toggle_bookmark, name='toggle_bookmark'),
 
-    # --- 3. จัดการรีวิวส่วนตัว (ต้องมีส่วนนี้!) ---
+    # --- 3. จัดการรีวิวส่วนตัว ---
     path('review/edit/<int:review_id>/', views.edit_review, name='edit_review'),
     path('review/delete/<int:review_id>/', views.delete_review, name='delete_review'),
 

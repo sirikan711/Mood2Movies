@@ -1,65 +1,176 @@
 {% extends 'base.html' %}
 
 {% block content %}
-<div class="flex">
-    <!-- Sidebar (Simple) -->
-    <aside class="w-64 bg-gray-800 min-h-screen p-6 hidden md:block rounded-r-xl mr-6">
-        <h2 class="text-xl font-bold text-yellow-500 mb-8">Admin Menu</h2>
-        <nav class="space-y-2">
-            <a href="{% url 'admin_dashboard' %}" class="block py-2 px-4 bg-gray-700 rounded text-white">📊 ภาพรวม</a>
-            <a href="{% url 'admin_movies' %}" class="block py-2 px-4 text-gray-400 hover:bg-gray-700 hover:text-white rounded transition">🎬 จัดการหนัง</a>
-            <a href="{% url 'admin_moods' %}" class="block py-2 px-4 text-gray-400 hover:bg-gray-700 hover:text-white rounded transition">🎭 จัดการอารมณ์</a>
-            <a href="{% url 'admin_reviews' %}" class="block py-2 px-4 text-gray-400 hover:bg-gray-700 hover:text-white rounded transition">💬 จัดการรีวิว</a>
+<div class="flex h-[calc(100vh-64px)] overflow-hidden bg-gray-900">
+    
+    <!-- Sidebar (Left) -->
+    <aside class="w-64 bg-gray-800 border-r border-gray-700 hidden md:flex flex-col">
+        <div class="p-6 border-b border-gray-700">
+            <h2 class="text-xl font-bold text-white flex items-center gap-2">
+                <span class="text-yellow-500 text-2xl"></span> Admin Panel
+            </h2>
+            <p class="text-gray-500 text-xs mt-1">Mood2Movie Management</p>
+        </div>
+        
+        <nav class="flex-1 overflow-y-auto py-4 px-3 space-y-1">
+            <!-- Menu Items -->
+            <a href="{% url 'admin_dashboard' %}" class="flex items-center gap-3 px-4 py-3 bg-gray-700/50 text-yellow-500 rounded-lg font-bold border-l-4 border-yellow-500 transition shadow-inner">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"></path></svg>
+                ภาพรวม
+            </a>
+            
+            <a href="{% url 'admin_movies' %}" class="flex items-center gap-3 px-4 py-3 text-gray-400 hover:bg-gray-700 hover:text-white rounded-lg transition group">
+                <svg class="w-5 h-5 group-hover:text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 4v16M17 4v16M3 8h4m10 0h4M3 12h18M3 16h4m10 0h4M4 20h16a1 1 0 001-1V5a1 1 0 00-1-1H4a1 1 0 00-1 1v14a1 1 0 001 1z"></path></svg>
+                จัดการหนัง
+            </a>
+            
+            <a href="{% url 'admin_moods' %}" class="flex items-center gap-3 px-4 py-3 text-gray-400 hover:bg-gray-700 hover:text-white rounded-lg transition group">
+                <svg class="w-5 h-5 group-hover:text-pink-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.828 14.828a4 4 0 01-5.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                จัดการอารมณ์
+            </a>
+            
+            <a href="{% url 'admin_reviews' %}" class="flex items-center gap-3 px-4 py-3 text-gray-400 hover:bg-gray-700 hover:text-white rounded-lg transition group">
+                <svg class="w-5 h-5 group-hover:text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z"></path></svg>
+                จัดการรีวิว
+            </a>
         </nav>
+        
+        <div class="p-4 border-t border-gray-700">
+            <a href="{% url 'home' %}" class="flex items-center gap-2 text-sm text-gray-500 hover:text-white transition">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path></svg>
+                กลับหน้าหลัก
+            </a>
+        </div>
     </aside>
 
-    <!-- Main Content -->
-    <div class="flex-1">
-        <h1 class="text-3xl font-bold mb-6">Dashboard ภาพรวม</h1>
+    <!-- Main Content (Right) -->
+    <div class="flex-1 overflow-y-auto p-6 md:p-10 scrollbar-hide">
+        <div class="flex justify-between items-center mb-8">
+            <h1 class="text-3xl font-bold text-white">Dashboard Overview</h1>
+            <span class="bg-gray-800 text-xs px-3 py-1 rounded-full border border-gray-600 text-gray-400">
+                ข้อมูลล่าสุด: {% now "d M Y H:i" %}
+            </span>
+        </div>
         
         <!-- Stats Cards -->
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-            <div class="bg-blue-900 p-6 rounded-xl shadow-lg border border-blue-700">
-                <h3 class="text-lg font-semibold text-blue-300">ภาพยนตร์ทั้งหมด</h3>
-                <p class="text-4xl font-bold mt-2">{{ total_movies }}</p>
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-10">
+            <!-- Movie Card -->
+            <div class="bg-gradient-to-br from-gray-800 to-gray-900 p-6 rounded-2xl shadow-lg border border-blue-500/30 relative overflow-hidden group hover:border-blue-500 transition duration-300">
+                <div class="absolute right-0 top-0 p-4 opacity-10 group-hover:opacity-20 transition">
+                    <svg class="w-24 h-24 text-blue-500" fill="currentColor" viewBox="0 0 20 20"><path d="M7 4v16M17 4v16M3 8h4m10 0h4M3 12h18M3 16h4m10 0h4M4 20h16a1 1 0 001-1V5a1 1 0 00-1-1H4a1 1 0 00-1 1v14a1 1 0 001 1z"></path></svg>
+                </div>
+                <h3 class="text-sm font-semibold text-blue-400 uppercase tracking-wider">ภาพยนตร์ทั้งหมด</h3>
+                <p class="text-4xl font-bold mt-2 text-white">{{ total_movies }}</p>
+                <div class="mt-4 text-xs text-gray-500">เรื่องในระบบ</div>
             </div>
-            <div class="bg-green-900 p-6 rounded-xl shadow-lg border border-green-700">
-                <h3 class="text-lg font-semibold text-green-300">รีวิวทั้งหมด</h3>
-                <p class="text-4xl font-bold mt-2">{{ total_reviews }}</p>
+
+            <!-- Reviews Card -->
+            <div class="bg-gradient-to-br from-gray-800 to-gray-900 p-6 rounded-2xl shadow-lg border border-green-500/30 relative overflow-hidden group hover:border-green-500 transition duration-300">
+                <div class="absolute right-0 top-0 p-4 opacity-10 group-hover:opacity-20 transition">
+                    <svg class="w-24 h-24 text-green-500" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M18 13V5a2 2 0 00-2-2H4a2 2 0 00-2 2v8a2 2 0 002 2h3l3 3 3-3h3a2 2 0 002-2zM5 7a1 1 0 011-1h8a1 1 0 110 2H6a1 1 0 01-1-1zm1 3a1 1 0 100 2h3a1 1 0 100-2H6z" clip-rule="evenodd"></path></svg>
+                </div>
+                <h3 class="text-sm font-semibold text-green-400 uppercase tracking-wider">รีวิวทั้งหมด</h3>
+                <p class="text-4xl font-bold mt-2 text-white">{{ total_reviews }}</p>
+                <div class="mt-4 text-xs text-gray-500">ความคิดเห็นจากผู้ใช้</div>
             </div>
-            <div class="bg-purple-900 p-6 rounded-xl shadow-lg border border-purple-700">
-                <h3 class="text-lg font-semibold text-purple-300">สมาชิกทั้งหมด</h3>
-                <p class="text-4xl font-bold mt-2">{{ total_users }}</p>
+
+            <!-- Users Card -->
+            <div class="bg-gradient-to-br from-gray-800 to-gray-900 p-6 rounded-2xl shadow-lg border border-purple-500/30 relative overflow-hidden group hover:border-purple-500 transition duration-300">
+                <div class="absolute right-0 top-0 p-4 opacity-10 group-hover:opacity-20 transition">
+                    <svg class="w-24 h-24 text-purple-500" fill="currentColor" viewBox="0 0 20 20"><path d="M9 6a3 3 0 11-6 0 3 3 0 016 0zM17 6a3 3 0 11-6 0 3 3 0 016 0zM12.93 17c.046-.327.07-.66.07-1a6.97 6.97 0 00-1.5-4.33A5 5 0 0119 16v1h-6.07zM6 11a5 5 0 015 5v1H1v-1a5 5 0 015-5z"></path></svg>
+                </div>
+                <h3 class="text-sm font-semibold text-purple-400 uppercase tracking-wider">สมาชิกทั้งหมด</h3>
+                <p class="text-4xl font-bold mt-2 text-white">{{ total_users }}</p>
+                <div class="mt-4 text-xs text-gray-500">ผู้ใช้งาน Active</div>
             </div>
         </div>
 
-        <!-- Recent Activity -->
-        <div class="bg-gray-800 p-6 rounded-xl shadow-lg">
-            <h2 class="text-xl font-bold mb-4">รีวิวล่าสุด</h2>
+        <!-- Recent Activity Table -->
+        <div class="bg-gray-800 rounded-xl shadow-lg border border-gray-700 overflow-hidden">
+            <div class="p-6 border-b border-gray-700 flex justify-between items-center">
+                <h2 class="text-xl font-bold text-white flex items-center gap-2">
+                    <span class="w-2 h-6 bg-yellow-500 rounded-full"></span>
+                    รีวิวล่าสุด
+                </h2>
+                <a href="{% url 'admin_reviews' %}" class="text-sm text-yellow-500 hover:text-yellow-400 hover:underline">ดูทั้งหมด →</a>
+            </div>
+            
             <div class="overflow-x-auto">
                 <table class="w-full text-left border-collapse">
                     <thead>
-                        <tr class="text-gray-400 border-b border-gray-700">
-                            <th class="py-2">User</th>
-                            <th class="py-2">Movie</th>
-                            <th class="py-2">Mood</th>
-                            <th class="py-2">Date</th>
+                        <tr class="bg-gray-900/50 text-gray-400 text-sm uppercase tracking-wider">
+                            <th class="py-4 px-6">User</th>
+                            <th class="py-4 px-6">Movie</th>
+                            <th class="py-4 px-6">Mood & Rating</th>
+                            <th class="py-4 px-6">Date</th>
+                            <th class="py-4 px-6 text-right">Action</th>
                         </tr>
                     </thead>
-                    <tbody>
+                    <tbody class="divide-y divide-gray-700">
                         {% for review in recent_reviews %}
-                        <tr class="border-b border-gray-700 hover:bg-gray-700 transition">
-                            <td class="py-3">{{ review.user.username }}</td>
-                            <td class="py-3">{{ review.movie.title }}</td>
-                            <td class="py-3">
-                                <span class="bg-gray-700 px-2 py-1 rounded text-xs">
-                                    {{ review.primary_mood.name }}
-                                </span>
+                        <tr class="hover:bg-gray-700/50 transition duration-150">
+                            <!-- User Column -->
+                            <td class="py-4 px-6">
+                                <div class="flex items-center gap-3">
+                                    <div class="w-8 h-8 rounded-full bg-gray-600 overflow-hidden flex-shrink-0">
+                                        {% if review.user.profile.avatar %}
+                                            <img src="{{ review.user.profile.avatar.url }}" class="w-full h-full object-cover">
+                                        {% else %}
+                                            <div class="w-full h-full flex items-center justify-center text-xs font-bold">{{ review.user.username|slice:":1"|upper }}</div>
+                                        {% endif %}
+                                    </div>
+                                    <span class="font-medium text-white">{{ review.user.username }}</span>
+                                </div>
                             </td>
-                            <td class="py-3 text-sm text-gray-400">{{ review.created_at|date:"d M Y" }}</td>
+                            
+                            <!-- Movie Column -->
+                            <td class="py-4 px-6">
+                                <div class="flex items-center gap-3">
+                                    <div class="w-8 h-12 bg-gray-900 rounded overflow-hidden flex-shrink-0 shadow-sm">
+                                        {% if review.movie.poster_path %}
+                                            <img src="https://image.tmdb.org/t/p/w92{{ review.movie.poster_path }}" class="w-full h-full object-cover">
+                                        {% endif %}
+                                    </div>
+                                    <span class="text-sm text-gray-300 line-clamp-1">{{ review.movie.title }}</span>
+                                </div>
+                            </td>
+                            
+                            <!-- Mood Column -->
+                            <td class="py-4 px-6">
+                                <div class="flex flex-col gap-1">
+                                    <span class="inline-flex w-fit items-center bg-blue-900/40 text-blue-300 px-2 py-0.5 rounded text-xs border border-blue-500/20">
+                                        {{ review.primary_mood.name }}
+                                    </span>
+                                    {% if review.rating %}
+                                    <span class="text-xs text-yellow-500 font-bold">★ {{ review.rating }}</span>
+                                    {% endif %}
+                                </div>
+                            </td>
+                            
+                            <!-- Date Column -->
+                            <td class="py-4 px-6 text-sm text-gray-400">
+                                {{ review.created_at|date:"d M Y" }}<br>
+                                <span class="text-xs opacity-60">{{ review.created_at|date:"H:i" }}</span>
+                            </td>
+
+                            <!-- Action Column -->
+                            <td class="py-4 px-6 text-right">
+                                <div class="flex items-center justify-end gap-2">
+                                    <a href="{% url 'movie_detail' review.movie.tmdb_id %}" target="_blank" class="p-2 text-gray-400 hover:text-white hover:bg-gray-700 rounded-lg transition" title="ดูหน้านี้">
+                                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" /></svg>
+                                    </a>
+                                    <a href="{% url 'delete_review' review.id %}" onclick="return confirm('ลบรีวิวนี้ในฐานะ Admin?')" class="p-2 text-red-400 hover:text-white hover:bg-red-600 rounded-lg transition" title="ลบ">
+                                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
+                                    </a>
+                                </div>
+                            </td>
                         </tr>
                         {% empty %}
-                        <tr><td colspan="4" class="py-4 text-center text-gray-500">ไม่มีข้อมูล</td></tr>
+                        <tr>
+                            <td colspan="5" class="py-8 text-center text-gray-500 italic">
+                                ยังไม่มีกิจกรรมล่าสุด
+                            </td>
+                        </tr>
                         {% endfor %}
                     </tbody>
                 </table>

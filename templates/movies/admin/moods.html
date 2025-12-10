@@ -1,75 +1,149 @@
 {% extends 'base.html' %}
 
 {% block content %}
-<div class="flex flex-col md:flex-row gap-6">
-    <!-- Sidebar -->
-    <aside class="w-full md:w-64 bg-gray-800 p-6 rounded-xl h-fit">
-        <h2 class="text-xl font-bold text-yellow-500 mb-4">Admin Menu</h2>
-        <nav class="space-y-2">
-            <a href="{% url 'admin_dashboard' %}" class="block py-2 px-4 text-gray-400 hover:bg-gray-700 hover:text-white rounded transition">📊 ภาพรวม</a>
-            <a href="{% url 'admin_movies' %}" class="block py-2 px-4 text-gray-400 hover:bg-gray-700 hover:text-white rounded transition">🎬 จัดการหนัง</a>
-            <a href="{% url 'admin_moods' %}" class="block py-2 px-4 bg-gray-700 text-white rounded">🎭 จัดการอารมณ์</a>
-            <a href="{% url 'admin_reviews' %}" class="block py-2 px-4 text-gray-400 hover:bg-gray-700 hover:text-white rounded transition">💬 จัดการรีวิว</a>
+<div class="flex h-[calc(100vh-64px)] overflow-hidden bg-gray-900">
+    
+    <!-- Sidebar (Copy จาก Dashboard เพื่อความเหมือนกันเป๊ะ) -->
+    <aside class="w-64 bg-gray-800 border-r border-gray-700 hidden md:flex flex-col">
+        <div class="p-6 border-b border-gray-700">
+            <h2 class="text-xl font-bold text-white flex items-center gap-2">
+                <span class="text-yellow-500 text-2xl"></span> Admin Panel
+            </h2>
+            <p class="text-gray-500 text-xs mt-1">Mood2Movie Management</p>
+        </div>
+        
+        <nav class="flex-1 overflow-y-auto py-4 px-3 space-y-1">
+            <a href="{% url 'admin_dashboard' %}" class="flex items-center gap-3 px-4 py-3 text-gray-400 hover:bg-gray-700 hover:text-white rounded-lg transition group">
+                <svg class="w-5 h-5 group-hover:text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"></path></svg>
+                ภาพรวม
+            </a>
+            <a href="{% url 'admin_movies' %}" class="flex items-center gap-3 px-4 py-3 text-gray-400 hover:bg-gray-700 hover:text-white rounded-lg transition group">
+                <svg class="w-5 h-5 group-hover:text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 4v16M17 4v16M3 8h4m10 0h4M3 12h18M3 16h4m10 0h4M4 20h16a1 1 0 001-1V5a1 1 0 00-1-1H4a1 1 0 00-1 1v14a1 1 0 001 1z"></path></svg>
+                จัดการหนัง
+            </a>
+            <a href="{% url 'admin_moods' %}" class="flex items-center gap-3 px-4 py-3 bg-gray-700/50 text-yellow-500 rounded-lg font-bold border-l-4 border-yellow-500 transition shadow-inner">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.828 14.828a4 4 0 01-5.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                จัดการอารมณ์
+            </a>
+            <a href="{% url 'admin_reviews' %}" class="flex items-center gap-3 px-4 py-3 text-gray-400 hover:bg-gray-700 hover:text-white rounded-lg transition group">
+                <svg class="w-5 h-5 group-hover:text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z"></path></svg>
+                จัดการรีวิว
+            </a>
         </nav>
+        
+        <div class="p-4 border-t border-gray-700">
+            <a href="{% url 'home' %}" class="flex items-center gap-2 text-sm text-gray-500 hover:text-white transition">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path></svg>
+                กลับหน้าหลัก
+            </a>
+        </div>
     </aside>
 
-    <div class="flex-1">
-        <h1 class="text-3xl font-bold mb-6">จัดการหมวดหมู่อารมณ์</h1>
+    <!-- Main Content -->
+    <div class="flex-1 overflow-y-auto p-6 md:p-10 scrollbar-hide">
+        <div class="flex justify-between items-center mb-8">
+            <h1 class="text-3xl font-bold text-white flex items-center gap-3">
+                <span class="p-2 bg-pink-500/20 text-pink-400 rounded-lg">
+                    <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.828 14.828a4 4 0 01-5.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                </span>
+                จัดการหมวดหมู่อารมณ์
+            </h1>
+            <span class="bg-gray-800 text-xs px-3 py-1 rounded-full border border-gray-600 text-gray-400">
+                ทั้งหมด {{ moods.count }} อารมณ์
+            </span>
+        </div>
 
-        <div class="grid md:grid-cols-2 gap-8">
-            <!-- Form เพิ่ม/แก้ไข -->
-            <div class="bg-gray-800 p-6 rounded-xl shadow-lg h-fit">
-                <h2 class="text-xl font-bold mb-4 text-yellow-500">เพิ่ม / แก้ไขอารมณ์</h2>
-                <form method="post">
-                    {% csrf_token %}
-                    <input type="hidden" name="mood_id" id="mood_id_input">
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            
+            <!-- Column 1: Form -->
+            <div class="lg:col-span-1">
+                <div class="bg-gray-800 rounded-2xl shadow-lg border border-gray-700 p-6 sticky top-6">
+                    <h2 class="text-xl font-bold mb-6 text-white flex items-center border-b border-gray-700 pb-4">
+                        <span class="mr-2 text-green-400">+</span> เพิ่ม / แก้ไข
+                    </h2>
                     
-                    <div class="mb-4">
-                        <label class="block text-gray-400 mb-2">ชื่ออารมณ์ (พร้อม Emoji)</label>
-                        <input type="text" name="mood_name" id="mood_name_input" required placeholder="เช่น 😊 มีความสุข (Happy)"
-                               class="w-full p-3 bg-gray-900 border border-gray-700 rounded text-white focus:border-yellow-500 focus:outline-none">
-                        <p class="text-xs text-gray-500 mt-2">แนะนำให้ใส่ Emoji นำหน้า เพื่อความสวยงาม</p>
-                    </div>
-                    
-                    <div class="flex gap-2">
-                        <button type="submit" class="bg-green-600 hover:bg-green-700 text-white px-6 py-2 rounded font-bold transition flex-1">บันทึก</button>
-                        <button type="button" onclick="resetForm()" class="bg-gray-600 hover:bg-gray-700 text-white px-4 py-2 rounded transition">ล้างค่า</button>
-                    </div>
-                </form>
+                    <form method="post" id="moodForm" class="space-y-5">
+                        {% csrf_token %}
+                        <input type="hidden" name="mood_id" id="mood_id_input">
+                        
+                        <div>
+                            <label class="block text-sm font-medium text-gray-400 mb-2">ชื่ออารมณ์</label>
+                            <div class="relative">
+                                <span class="absolute inset-y-0 left-0 pl-3 flex items-center text-gray-500">
+                                    
+                                </span>
+                                <input type="text" name="mood_name" id="mood_name_input" required 
+                                       placeholder="เช่น มีความสุข (Happy)"
+                                       class="w-full pl-10 pr-4 py-3 bg-gray-900 border border-gray-600 rounded-lg text-white placeholder-gray-500 focus:border-yellow-500 focus:ring-1 focus:ring-yellow-500 transition outline-none">
+                            </div>
+                            <p class="text-xs text-gray-500 mt-2 ml-1">
+                                * ชื่อควรเป็นภาษาอังกฤษ เช่น Happy, Sad เพื่อให้ระบบจับคู่อิโมจิได้ถูกต้อง
+                            </p>
+                        </div>
+                        
+                        <div class="flex gap-3 pt-2">
+                            <button type="submit" class="flex-1 bg-gradient-to-r from-green-600 to-green-700 hover:from-green-500 hover:to-green-600 text-white font-bold py-2.5 rounded-lg shadow-lg transition transform hover:scale-[1.02] flex justify-center items-center">
+                                <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+                                บันทึก
+                            </button>
+                            <button type="button" onclick="resetForm()" class="px-4 py-2.5 bg-gray-700 hover:bg-gray-600 text-gray-300 rounded-lg transition border border-gray-600">
+                                ล้างค่า
+                            </button>
+                        </div>
+                    </form>
+                </div>
             </div>
 
-            <!-- Moods List -->
-            <div class="bg-gray-800 rounded-xl shadow-lg overflow-hidden">
-                <table class="w-full text-left">
-                    <thead class="bg-gray-700 text-gray-300">
-                        <tr>
-                            <th class="p-4">Name</th>
-                            <th class="p-4 text-right">Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {% for mood in moods %}
-                        <tr class="border-b border-gray-700 hover:bg-gray-700 transition group">
-                            <td class="p-4 text-lg">{{ mood.name }}</td>
-                            <td class="p-4 text-right space-x-2">
-                                <!-- ปุ่ม Edit (ใช้ JS ยัดค่าเข้า Form) -->
-                                <button onclick="editMood('{{ mood.id }}', '{{ mood.name|escapejs }}')" 
-                                        class="text-blue-400 hover:text-blue-300 font-bold text-sm bg-blue-900/30 px-3 py-1 rounded border border-blue-900/50">
-                                    แก้ไข
-                                </button>
-                                
-                                <a href="{% url 'admin_delete_mood' mood.id %}" 
-                                   onclick="return confirm('ยืนยันที่จะลบ?')"
-                                   class="text-red-400 hover:text-red-500 font-bold text-sm bg-red-900/30 px-3 py-1 rounded border border-red-900/50">
-                                   ลบ
-                                </a>
-                            </td>
-                        </tr>
-                        {% empty %}
-                        <tr><td colspan="2" class="p-8 text-center text-gray-500">ยังไม่มีข้อมูล</td></tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
+            <!-- Column 2: Table -->
+            <div class="lg:col-span-2">
+                <div class="bg-gray-800 rounded-2xl shadow-lg border border-gray-700 overflow-hidden">
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left border-collapse">
+                            <thead>
+                                <tr class="bg-gray-900/50 text-gray-400 text-sm uppercase tracking-wider border-b border-gray-700">
+                                    <th class="py-4 px-6 font-medium">ชื่ออารมณ์</th>
+                                    <th class="py-4 px-6 text-right font-medium">จัดการ</th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-gray-700">
+                                {% for mood in moods %}
+                                <tr class="hover:bg-gray-700/50 transition duration-150 group">
+                                    <td class="py-4 px-6">
+                                        <div class="flex items-center">
+                                            <!-- ใช้อิโมจิจาก Property ที่เราสร้างไว้ใน Model -->
+                                            <div class="w-10 h-10 rounded-full bg-gray-700 flex items-center justify-center text-2xl mr-4 group-hover:scale-110 transition border border-gray-600">
+                                                {{ mood.emoji }}
+                                            </div>
+                                            <span class="text-lg text-white font-medium">{{ mood.name }}</span>
+                                        </div>
+                                    </td>
+                                    <td class="py-4 px-6 text-right space-x-2">
+                                        <button onclick="editMood('{{ mood.id }}', '{{ mood.name|escapejs }}')" 
+                                                class="inline-flex items-center px-3 py-1.5 bg-blue-500/10 text-blue-400 hover:bg-blue-500/20 rounded-md transition text-sm font-medium border border-blue-500/20">
+                                            <svg class="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg>
+                                            แก้ไข
+                                        </button>
+                                        
+                                        <a href="{% url 'admin_delete_mood' mood.id %}" 
+                                           onclick="return confirm('ยืนยันที่จะลบอารมณ์ \'{{ mood.name }}\' ?\n(ระวัง: รีวิวที่ใช้อารมณ์นี้อาจได้รับผลกระทบ)')"
+                                           class="inline-flex items-center px-3 py-1.5 bg-red-500/10 text-red-400 hover:bg-red-500/20 rounded-md transition text-sm font-medium border border-red-500/20">
+                                            <svg class="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+                                            ลบ
+                                        </a>
+                                    </td>
+                                </tr>
+                                {% empty %}
+                                <tr>
+                                    <td colspan="2" class="p-10 text-center text-gray-500">
+                                        <svg class="w-16 h-16 mx-auto mb-4 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                                        ยังไม่มีข้อมูลอารมณ์
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
@@ -80,6 +154,8 @@
         document.getElementById('mood_id_input').value = id;
         document.getElementById('mood_name_input').value = name;
         document.getElementById('mood_name_input').focus();
+        
+        document.getElementById('moodForm').scrollIntoView({ behavior: 'smooth' });
     }
     
     function resetForm() {

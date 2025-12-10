@@ -1,68 +1,154 @@
 {% extends 'base.html' %}
 
 {% block content %}
-<div class="flex flex-col md:flex-row gap-6">
-    <!-- Sidebar (Copy มา หรือทำเป็น include ก็ได้) -->
-    <aside class="w-full md:w-64 bg-gray-800 p-6 rounded-xl h-fit">
-        <h2 class="text-xl font-bold text-yellow-500 mb-4">Admin Menu</h2>
-        <nav class="space-y-2">
-            <a href="{% url 'admin_dashboard' %}" class="block py-2 px-4 text-gray-400 hover:bg-gray-700 hover:text-white rounded transition">📊 ภาพรวม</a>
-            <a href="{% url 'admin_movies' %}" class="block py-2 px-4 bg-gray-700 text-white rounded">🎬 จัดการหนัง</a>
-            <a href="{% url 'admin_moods' %}" class="block py-2 px-4 text-gray-400 hover:bg-gray-700 hover:text-white rounded transition">🎭 จัดการอารมณ์</a>
-            <a href="{% url 'admin_reviews' %}" class="block py-2 px-4 text-gray-400 hover:bg-gray-700 hover:text-white rounded transition">💬 จัดการรีวิว</a>
+<div class="flex h-[calc(100vh-64px)] overflow-hidden bg-gray-900">
+    
+    <!-- Sidebar (ชุดเดียวกับ Dashboard แต่ Active ที่ปุ่มจัดการหนัง) -->
+    <aside class="w-64 bg-gray-800 border-r border-gray-700 hidden md:flex flex-col">
+        <div class="p-6 border-b border-gray-700">
+            <h2 class="text-xl font-bold text-white flex items-center gap-2">
+                <span class="text-yellow-500 text-2xl"></span> Admin Panel
+            </h2>
+            <p class="text-gray-500 text-xs mt-1">Mood2Movie Management</p>
+        </div>
+        
+        <nav class="flex-1 overflow-y-auto py-4 px-3 space-y-1">
+            <a href="{% url 'admin_dashboard' %}" class="flex items-center gap-3 px-4 py-3 text-gray-400 hover:bg-gray-700 hover:text-white rounded-lg transition group">
+                <svg class="w-5 h-5 group-hover:text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"></path></svg>
+                ภาพรวม
+            </a>
+            
+            <!-- Active State -->
+            <a href="{% url 'admin_movies' %}" class="flex items-center gap-3 px-4 py-3 bg-gray-700/50 text-yellow-500 rounded-lg font-bold border-l-4 border-yellow-500 transition shadow-inner">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 4v16M17 4v16M3 8h4m10 0h4M3 12h18M3 16h4m10 0h4M4 20h16a1 1 0 001-1V5a1 1 0 00-1-1H4a1 1 0 00-1 1v14a1 1 0 001 1z"></path></svg>
+                จัดการหนัง
+            </a>
+            
+            <a href="{% url 'admin_moods' %}" class="flex items-center gap-3 px-4 py-3 text-gray-400 hover:bg-gray-700 hover:text-white rounded-lg transition group">
+                <svg class="w-5 h-5 group-hover:text-pink-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.828 14.828a4 4 0 01-5.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                จัดการอารมณ์
+            </a>
+            <a href="{% url 'admin_reviews' %}" class="flex items-center gap-3 px-4 py-3 text-gray-400 hover:bg-gray-700 hover:text-white rounded-lg transition group">
+                <svg class="w-5 h-5 group-hover:text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z"></path></svg>
+                จัดการรีวิว
+            </a>
         </nav>
+        
+        <div class="p-4 border-t border-gray-700">
+            <a href="{% url 'home' %}" class="flex items-center gap-2 text-sm text-gray-500 hover:text-white transition">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path></svg>
+                กลับหน้าหลัก
+            </a>
+        </div>
     </aside>
 
-    <div class="flex-1">
-        <div class="flex justify-between items-center mb-6">
-            <h1 class="text-3xl font-bold">จัดการภาพยนตร์</h1>
-            <a href="{% url 'search_movies' %}" class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded transition">
-                + เพิ่มหนัง (ผ่าน Search)
+    <!-- Main Content -->
+    <div class="flex-1 overflow-y-auto p-6 md:p-10 scrollbar-hide">
+        
+        <!-- Header & Action -->
+        <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
+            <h1 class="text-3xl font-bold text-white flex items-center gap-3">
+                <span class="p-2 bg-blue-500/20 text-blue-400 rounded-lg">
+                    <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 4v16M17 4v16M3 8h4m10 0h4M3 12h18M3 16h4m10 0h4M4 20h16a1 1 0 001-1V5a1 1 0 00-1-1H4a1 1 0 00-1 1v14a1 1 0 001 1z"></path></svg>
+                </span>
+                จัดการภาพยนตร์
+                <span class="text-sm font-normal text-gray-500 bg-gray-800 px-3 py-1 rounded-full border border-gray-700 ml-2">
+                    {{ movies.count }} เรื่อง
+                </span>
+            </h1>
+            <a href="{% url 'search_movies' %}" class="flex items-center bg-gradient-to-r from-green-600 to-green-700 hover:from-green-500 hover:to-green-600 text-white px-6 py-2.5 rounded-lg shadow-lg transition transform hover:scale-[1.02] font-bold">
+                <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
+                เพิ่มหนัง (จาก TMDb)
             </a>
         </div>
 
-        <!-- Search Box -->
-        <form method="GET" class="mb-6">
-            <input type="text" name="q" value="{{ query|default:'' }}" placeholder="ค้นหาชื่อหนังในระบบ..." 
-                   class="w-full p-3 bg-gray-800 border border-gray-700 rounded text-white focus:border-yellow-500 focus:outline-none">
-        </form>
+        <!-- Search Bar -->
+        <div class="bg-gray-800 p-4 rounded-xl shadow-lg border border-gray-700 mb-6">
+            <form method="GET" class="relative">
+                <span class="absolute inset-y-0 left-0 pl-4 flex items-center text-gray-500">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+                </span>
+                <input type="text" name="q" value="{{ query|default:'' }}" placeholder="ค้นหาชื่อหนัง, ปีที่ฉาย..." 
+                       class="w-full pl-12 pr-4 py-3 bg-gray-900 border border-gray-600 rounded-lg text-white placeholder-gray-500 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition outline-none">
+            </form>
+        </div>
 
         <!-- Movies Table -->
-        <div class="bg-gray-800 rounded-xl shadow-lg overflow-hidden">
-            <table class="w-full text-left">
-                <thead class="bg-gray-700 text-gray-300">
-                    <tr>
-                        <th class="p-4">Poster</th>
-                        <th class="p-4">Title</th>
-                        <th class="p-4">Year</th>
-                        <th class="p-4">Actions</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for movie in movies %}
-                    <tr class="border-b border-gray-700 hover:bg-gray-700 transition">
-                        <td class="p-4">
-                            {% if movie.poster_path %}
-                            <img src="https://image.tmdb.org/t/p/w92{{ movie.poster_path }}" class="w-12 h-18 object-cover rounded">
-                            {% else %}
-                            <div class="w-12 h-18 bg-gray-600 rounded flex items-center justify-center text-xs">No img</div>
-                            {% endif %}
-                        </td>
-                        <td class="p-4 font-bold">{{ movie.title }}</td>
-                        <td class="p-4">{{ movie.release_date|slice:":4" }}</td>
-                        <td class="p-4">
-                            <a href="{% url 'admin_delete_movie' movie.id %}" 
-                               onclick="return confirm('ยืนยันที่จะลบหนังเรื่องนี้? ข้อมูลรีวิวที่เกี่ยวข้องจะหายไปทั้งหมด')"
-                               class="text-red-400 hover:text-red-500 font-bold text-sm bg-red-900/30 px-3 py-1 rounded border border-red-900/50">
-                               ลบ
-                            </a>
-                        </td>
-                    </tr>
-                    {% empty %}
-                    <tr><td colspan="4" class="p-8 text-center text-gray-500">ไม่พบข้อมูล</td></tr>
-                    {% endfor %}
-                </tbody>
-            </table>
+        <div class="bg-gray-800 rounded-xl shadow-lg border border-gray-700 overflow-hidden">
+            <div class="overflow-x-auto">
+                <table class="w-full text-left border-collapse">
+                    <thead>
+                        <tr class="bg-gray-900/50 text-gray-400 text-sm uppercase tracking-wider border-b border-gray-700">
+                            <th class="py-4 px-6 w-24">Poster</th>
+                            <th class="py-4 px-6">Movie Info</th>
+                            <th class="py-4 px-6">TMDb ID</th>
+                            <th class="py-4 px-6 text-right">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-gray-700">
+                        {% for movie in movies %}
+                        <tr class="hover:bg-gray-700/50 transition duration-150 group">
+                            <!-- Poster Column -->
+                            <td class="py-4 px-6">
+                                <div class="w-16 h-24 bg-gray-900 rounded-md overflow-hidden shadow-sm border border-gray-600 relative">
+                                    {% if movie.poster_path %}
+                                        <img src="https://image.tmdb.org/t/p/w92{{ movie.poster_path }}" class="w-full h-full object-cover">
+                                    {% elif movie.poster_url %}
+                                        <img src="{{ movie.poster_url }}" class="w-full h-full object-cover">
+                                    {% else %}
+                                        <div class="w-full h-full flex items-center justify-center text-xs text-gray-500 flex-col">
+                                            <span>No</span><span>Img</span>
+                                        </div>
+                                    {% endif %}
+                                </div>
+                            </td>
+                            
+                            <!-- Info Column -->
+                            <td class="py-4 px-6">
+                                <h3 class="text-lg font-bold text-white mb-1 group-hover:text-blue-400 transition">
+                                    {{ movie.title }}
+                                </h3>
+                                <div class="flex items-center text-sm text-gray-400">
+                                    <span class="bg-gray-700 px-2 py-0.5 rounded text-xs mr-2 border border-gray-600">
+                                        {{ movie.release_date|slice:":4"|default:"N/A" }}
+                                    </span>
+                                    <span class="opacity-60">Movie</span>
+                                </div>
+                            </td>
+
+                            <!-- ID Column -->
+                            <td class="py-4 px-6">
+                                <span class="font-mono text-sm text-gray-500 bg-gray-900 px-2 py-1 rounded">
+                                    #{{ movie.tmdb_id }}
+                                </span>
+                            </td>
+
+                            <!-- Actions Column -->
+                            <td class="py-4 px-6 text-right">
+                                <div class="flex items-center justify-end gap-2">
+                                    <a href="{% url 'movie_detail' movie.tmdb_id %}" target="_blank" class="p-2 text-gray-400 hover:text-white hover:bg-gray-700 rounded-lg transition" title="ดูหน้านี้">
+                                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" /></svg>
+                                    </a>
+                                    <a href="{% url 'admin_delete_movie' movie.id %}" onclick="return confirm('คำเตือน: การลบหนัง \'{{ movie.title }}\' จะทำให้รีวิวทั้งหมดที่เกี่ยวข้องหายไปด้วย!\n\nยืนยันที่จะลบหรือไม่?')" class="p-2 text-red-400 hover:text-white hover:bg-red-600 rounded-lg transition" title="ลบหนัง">
+                                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
+                                    </a>
+                                </div>
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="4" class="p-12 text-center">
+                                <div class="flex flex-col items-center justify-center text-gray-500">
+                                    <svg class="w-16 h-16 mb-4 opacity-50" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 4v16M17 4v16M3 8h4m10 0h4M3 12h18M3 16h4m10 0h4M4 20h16a1 1 0 001-1V5a1 1 0 00-1-1H4a1 1 0 00-1 1v14a1 1 0 001 1z"></path></svg>
+                                    <p class="text-lg font-medium">ไม่พบภาพยนตร์ในระบบ</p>
+                                    <p class="text-sm mt-2">ลองเพิ่มหนังใหม่ หรือเปลี่ยนคำค้นหา</p>
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
         </div>
     </div>
 </div>

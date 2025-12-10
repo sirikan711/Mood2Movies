@@ -19,19 +19,22 @@ class Movie(models.Model):
 class Mood(models.Model):
     name = models.CharField(max_length=50, unique=True)
 
+    # เพิ่ม Property นี้เพื่อให้ Template เรียกใช้ {{ mood.emoji }} ได้โดยตรง
+    @property
+    def emoji(self):
+        if 'Happy' in self.name: return '😊'
+        elif 'Sad' in self.name: return '😭'
+        elif 'Scary' in self.name: return '😨'
+        elif 'Surprised' in self.name: return '😲'
+        elif 'Heartwarming' in self.name: return '🥰'
+        elif 'Tense' in self.name: return '😬'
+        elif 'Funny' in self.name: return '🤣'
+        elif 'Relaxing' in self.name: return '😌'
+        return '🎬'
+
     def __str__(self):
-        # Auto-add emoji if contained in name string
-        emoji = ''
-        if 'Happy' in self.name: emoji = '😊'
-        elif 'Sad' in self.name: emoji = '😭'
-        elif 'Scary' in self.name: emoji = '😨'
-        elif 'Surprised' in self.name: emoji = '😲'
-        elif 'Heartwarming' in self.name: emoji = '🥰'
-        elif 'Tense' in self.name: emoji = '😬'
-        elif 'Funny' in self.name: emoji = '🤣'
-        elif 'Relaxing' in self.name: emoji = '😌'
-        else: emoji = '🎬'
-        return f"{emoji} {self.name}"
+        # เรียกใช้ Property ด้านบน
+        return f"{self.emoji} {self.name}"
 
 # --- 2. User Interaction Models ---
 

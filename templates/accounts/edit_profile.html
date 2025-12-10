@@ -1,104 +1,227 @@
 {% extends 'base.html' %}
 
 {% block content %}
-<div class="max-w-2xl mx-auto">
-    <h1 class="text-3xl font-bold mb-8 text-center">แก้ไขข้อมูลส่วนตัว ✏️</h1>
 
-    <!-- แสดง Error รวม (ถ้ามี) -->
+<!-- เพิ่ม Style เพื่อบังคับสีของ Input และแก้เรื่องกล่องซ้อนที่ปุ่มเลือกไฟล์ -->
+<style>
+    /* บังคับสไตล์ให้กับ Input ทั่วไป (ยกเว้น type="file") */
+    .profile-input input:not([type="file"]), 
+    .profile-input textarea,
+    .profile-input select {
+        background-color: #374151 !important; /* bg-gray-700 */
+        border: 1px solid #4b5563 !important; /* border-gray-600 */
+        color: #ffffff !important;
+        border-radius: 0.5rem;
+        padding: 0.5rem 0.75rem;
+        width: 100%;
+        outline: none;
+        transition: all 0.2s;
+    }
+
+    /* สไตล์เฉพาะสำหรับช่องเลือกไฟล์ */
+    .profile-input input[type="file"] {
+        background-color: transparent !important;
+        border: none !important;
+        padding: 0.5rem 0 !important;
+        color: #9ca3af !important; /* text-gray-400 */
+        width: 100%;
+    }
+
+    /* ตกแต่งปุ่ม Choose File */
+    .profile-input input[type="file"]::-webkit-file-upload-button {
+        background-color: #eab308; /* yellow-500 */
+        color: #111827; /* gray-900 */
+        border: none;
+        padding: 0.5rem 1rem;
+        border-radius: 0.375rem; /* rounded-md */
+        font-weight: 600;
+        cursor: pointer;
+        margin-right: 1rem;
+        transition: background-color 0.2s;
+    }
+
+    .profile-input input[type="file"]::-webkit-file-upload-button:hover {
+        background-color: #ca8a04; /* yellow-600 */
+    }
+
+    .profile-input input:not([type="file"]):focus, 
+    .profile-input textarea:focus {
+        border-color: #eab308 !important; /* yellow-500 */
+        box-shadow: 0 0 0 1px #eab308;
+    }
+
+    /* แก้ปัญหา Autofill */
+    .profile-input input:-webkit-autofill,
+    .profile-input input:-webkit-autofill:hover, 
+    .profile-input input:-webkit-autofill:focus, 
+    .profile-input textarea:-webkit-autofill,
+    .profile-input textarea:-webkit-autofill:hover,
+    .profile-input textarea:-webkit-autofill:focus {
+        -webkit-box-shadow: 0 0 0 30px #374151 inset !important;
+        -webkit-text-fill-color: white !important;
+        transition: background-color 5000s ease-in-out 0s;
+        caret-color: white;
+    }
+</style>
+
+<div class="max-w-2xl mx-auto">
+    <h1 class="text-3xl font-bold mb-8 text-center text-white">แก้ไขข้อมูลส่วนตัว</h1>
+
+    <!-- แสดง Error รวม -->
     {% if u_form.errors or p_form.errors %}
-        <div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative mb-6" role="alert">
+        <div class="bg-red-900/50 border border-red-500 text-red-200 px-4 py-3 rounded relative mb-6 animate-fade-in-down" role="alert">
             <strong class="font-bold">เกิดข้อผิดพลาด!</strong>
             <span class="block sm:inline">กรุณาตรวจสอบข้อมูลด้านล่าง</span>
             {% if u_form.non_field_errors %}
-                <div class="mt-2">{{ u_form.non_field_errors }}</div>
+                <div class="mt-2 text-sm bg-red-900/30 p-2 rounded">{{ u_form.non_field_errors }}</div>
             {% endif %}
             {% if p_form.non_field_errors %}
-                <div class="mt-2">{{ p_form.non_field_errors }}</div>
+                <div class="mt-2 text-sm bg-red-900/30 p-2 rounded">{{ p_form.non_field_errors }}</div>
             {% endif %}
         </div>
     {% endif %}
 
     <div class="bg-gray-800 p-8 rounded-xl shadow-2xl border border-gray-700">
         
-        <!-- แสดงรูปปัจจุบัน -->
-        <div class="flex justify-center mb-8">
-            <div class="relative group">
-                <div class="w-32 h-32 rounded-full overflow-hidden border-4 border-yellow-500">
-                    {% if user.profile.avatar %}
-                        <img src="{{ user.profile.avatar.url }}" class="w-full h-full object-cover">
-                    {% else %}
-                        <div class="w-full h-full bg-yellow-500 flex items-center justify-center text-5xl font-bold text-gray-900">
+        <form method="POST" enctype="multipart/form-data" class="space-y-6 profile-input" id="profileForm">
+            {% csrf_token %}
+
+            <!-- แสดงรูปปัจจุบัน + Preview -->
+            <div class="flex justify-center mb-8">
+                <div class="relative group">
+                    <div class="w-32 h-32 rounded-full overflow-hidden border-4 border-yellow-500 shadow-lg bg-gray-700 relative">
+                        <!-- กรณีมีรูป: ใส่ ID เพื่อใช้ JS เข้าถึง -->
+                        <img id="avatar-preview-img" src="{% if user.profile.avatar %}{{ user.profile.avatar.url }}{% else %}#{% endif %}" class="w-full h-full object-cover {% if not user.profile.avatar %}hidden{% endif %}">
+                        
+                        <!-- กรณีไม่มีรูป (แสดงตัวอักษรย่อ): ใส่ ID เพื่อซ่อนเมื่อเลือกรูป -->
+                        <div id="avatar-placeholder-div" class="w-full h-full bg-yellow-500 flex items-center justify-center text-5xl font-bold text-gray-900 {% if user.profile.avatar %}hidden{% endif %}">
                             {{ user.username|slice:":1"|upper }}
                         </div>
-                    {% endif %}
-                </div>
-                <div class="absolute bottom-0 right-0 bg-gray-700 p-2 rounded-full border border-gray-500">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" />
-                    </svg>
+                    </div>
+                    
+                    <!-- ไอคอนกล้อง -->
+                    <label for="id_avatar" class="absolute bottom-0 right-0 bg-gray-700 p-2 rounded-full border border-gray-500 shadow-md cursor-pointer hover:bg-gray-600 hover:border-yellow-500 transition-all duration-200 group-hover:scale-110 z-10">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-yellow-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" />
+                        </svg>
+                    </label>
                 </div>
             </div>
-        </div>
-
-        <form method="POST" enctype="multipart/form-data" class="space-y-6">
-            {% csrf_token %}
             
-            <!-- ส่วนข้อมูล User (Username, Email, ชื่อ) -->
+            <!-- ข้อมูลบัญชี -->
             <div class="border-b border-gray-700 pb-6 mb-6">
-                <h2 class="text-xl font-semibold text-yellow-500 mb-4">ข้อมูลบัญชี</h2>
+                <h2 class="text-xl font-semibold text-yellow-500 mb-4 flex items-center">
+                    <span class="mr-2"></span> ข้อมูลบัญชี
+                </h2>
                 
                 <div class="grid md:grid-cols-2 gap-4">
                     <div>
                         <label class="block text-sm text-gray-400 mb-1">Username</label>
                         {{ u_form.username }}
-                        <div class="text-red-500 text-xs mt-1">{{ u_form.username.errors }}</div>
+                        <div class="text-red-400 text-xs mt-1 pl-1">{{ u_form.username.errors }}</div>
                     </div>
                     <div>
                         <label class="block text-sm text-gray-400 mb-1">Email</label>
                         {{ u_form.email }}
-                        <div class="text-red-500 text-xs mt-1">{{ u_form.email.errors }}</div>
+                        <div class="text-red-400 text-xs mt-1 pl-1">{{ u_form.email.errors }}</div>
                     </div>
                     <div>
                         <label class="block text-sm text-gray-400 mb-1">ชื่อจริง</label>
                         {{ u_form.first_name }}
-                        <div class="text-red-500 text-xs mt-1">{{ u_form.first_name.errors }}</div>
+                        <div class="text-red-400 text-xs mt-1 pl-1">{{ u_form.first_name.errors }}</div>
                     </div>
                     <div>
                         <label class="block text-sm text-gray-400 mb-1">นามสกุล</label>
                         {{ u_form.last_name }}
-                        <div class="text-red-500 text-xs mt-1">{{ u_form.last_name.errors }}</div>
+                        <div class="text-red-400 text-xs mt-1 pl-1">{{ u_form.last_name.errors }}</div>
                     </div>
                 </div>
             </div>
 
-            <!-- ส่วนข้อมูล Profile (Bio, รูป) -->
+            <!-- ข้อมูลเพิ่มเติม -->
             <div>
-                <h2 class="text-xl font-semibold text-yellow-500 mb-4">ข้อมูลเพิ่มเติม</h2>
+                <h2 class="text-xl font-semibold text-yellow-500 mb-4 flex items-center">
+                    <span class="mr-2"></span> ข้อมูลเพิ่มเติม
+                </h2>
                 
                 <div class="mb-4">
                     <label class="block text-sm text-gray-400 mb-1">คำแนะนำตัว (Bio)</label>
                     {{ p_form.bio }}
-                    <div class="text-red-500 text-xs mt-1">{{ p_form.bio.errors }}</div>
+                    <div class="text-red-400 text-xs mt-1 pl-1">{{ p_form.bio.errors }}</div>
                 </div>
 
                 <div class="mb-4">
-                    <label class="block text-sm text-gray-400 mb-1">รูปโปรไฟล์</label>
+                    <label class="block text-sm text-gray-400 mb-1">เปลี่ยนรูปโปรไฟล์ (หรือกดที่รูปกล้องด้านบน)</label>
                     {{ p_form.avatar }}
-                    <p class="text-xs text-gray-500 mt-1">รองรับไฟล์ .jpg, .png ขนาดไม่เกิน 5MB</p>
-                    <div class="text-red-500 text-xs mt-1">{{ p_form.avatar.errors }}</div>
+                    <p class="text-xs text-gray-500 mt-2 flex items-center">
+                        <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                        รองรับไฟล์ .jpg, .png, .gif ขนาดไม่เกิน 5MB
+                    </p>
+                    <div class="text-red-400 text-xs mt-1 pl-1 font-semibold">{{ p_form.avatar.errors }}</div>
                 </div>
             </div>
 
-            <div class="flex gap-4 pt-4">
-                <button type="submit" class="flex-1 bg-yellow-500 hover:bg-yellow-400 text-gray-900 font-bold py-3 px-4 rounded-lg transition transform hover:scale-[1.02] shadow-lg">
-                    บันทึกการเปลี่ยนแปลง
+            <div class="flex gap-4 pt-4 border-t border-gray-700">
+                <button type="submit" id="submitBtn" class="flex-1 bg-yellow-500 hover:bg-yellow-400 text-gray-900 font-bold py-3 px-4 rounded-lg transition transform hover:scale-[1.02] shadow-lg flex justify-center items-center">
+                    <span id="btnText" class="flex items-center">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" viewBox="0 0 20 20" fill="currentColor">
+                            <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" />
+                        </svg>
+                        บันทึกการเปลี่ยนแปลง
+                    </span>
+                    <!-- Spinner (ซ่อนอยู่โดย Default) -->
+                    <svg id="btnSpinner" class="animate-spin h-5 w-5 text-gray-900 hidden" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    </svg>
                 </button>
-                <a href="{% url 'profile' %}" class="px-6 py-3 rounded-lg border border-gray-600 text-gray-400 hover:bg-gray-700 hover:text-white transition">
+                <a href="{% url 'profile' %}" class="px-6 py-3 rounded-lg border border-gray-600 text-gray-400 hover:bg-gray-700 hover:text-white transition flex items-center">
                     ยกเลิก
                 </a>
             </div>
         </form>
     </div>
 </div>
+
+<script>
+    // Script สำหรับ Preview รูปภาพทันทีที่เลือก
+    const avatarInput = document.querySelector('input[name="avatar"]'); // หรือใช้ id_avatar ถ้า Django generate มา
+    const avatarImg = document.getElementById('avatar-preview-img');
+    const avatarPlaceholder = document.getElementById('avatar-placeholder-div');
+
+    if (avatarInput) {
+        avatarInput.addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    // แสดงรูปที่อ่านได้
+                    avatarImg.src = e.target.result;
+                    avatarImg.classList.remove('hidden');
+                    // ซ่อน Placeholder
+                    if (avatarPlaceholder) {
+                        avatarPlaceholder.classList.add('hidden');
+                    }
+                }
+                reader.readAsDataURL(file);
+            }
+        });
+    }
+
+    // Script สำหรับเปลี่ยนปุ่มเป็น Loading
+    const form = document.getElementById('profileForm');
+    const submitBtn = document.getElementById('submitBtn');
+    const btnText = document.getElementById('btnText');
+    const btnSpinner = document.getElementById('btnSpinner');
+
+    form.addEventListener('submit', function() {
+        // ป้องกันการกดซ้ำ และแสดงสถานะกำลังโหลด
+        submitBtn.disabled = true;
+        submitBtn.classList.add('opacity-75', 'cursor-not-allowed');
+        btnText.classList.add('hidden');
+        btnSpinner.classList.remove('hidden');
+    });
+</script>
+
 {% endblock %}

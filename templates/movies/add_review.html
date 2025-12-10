@@ -1,59 +1,223 @@
 {% extends 'base.html' %}
 
 {% block content %}
-<div class="max-w-2xl mx-auto bg-gray-800 p-8 rounded-xl shadow-2xl">
-    <h2 class="text-3xl font-bold mb-6 text-yellow-500 flex items-center">
-        <span class="mr-2">🎭</span> แปะอารมณ์หนัง: {{ movie.title }}
-    </h2>
+<div class="min-h-[80vh] flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8 relative">
     
-    <form method="post" class="space-y-6">
-        {% csrf_token %}
-        
-        <!-- Primary Mood -->
-        <div>
-            <label class="block text-lg font-semibold mb-2 text-gray-300">หนังเรื่องนี้ให้อารมณ์หลักอะไรกับคุณ?</label>
-            {{ form.primary_mood }}
-        </div>
+    <!-- Page Background (Blurred Poster) -->
+    <div class="fixed inset-0 z-0 pointer-events-none">
+        {% if movie.poster_path %}
+            <img src="https://image.tmdb.org/t/p/w1280{{ movie.poster_path }}" class="w-full h-full object-cover opacity-10 filter blur-xl scale-110">
+        {% elif movie.poster_url %}
+            <img src="{{ movie.poster_url }}" class="w-full h-full object-cover opacity-10 filter blur-xl scale-110">
+        {% else %}
+            <div class="w-full h-full bg-gray-900"></div>
+        {% endif %}
+        <div class="absolute inset-0 bg-gradient-to-t from-gray-900 via-gray-900/80 to-transparent"></div>
+    </div>
 
-        <!-- Intensity (Slider) -->
-        <div>
-             <label class="block text-lg font-semibold mb-2 text-gray-300 flex justify-between">
-                <span>ความเข้มข้นของอารมณ์</span>
-                <span id="intensity-value" class="text-yellow-500 font-bold">3</span> <!-- Default value -->
-            </label>
-            <div class="flex items-center gap-4">
-                <span class="text-sm text-gray-400">น้อย (1)</span>
-                {{ form.mood_intensity }}
-                <span class="text-sm text-gray-400">มาก (5)</span>
+    <div class="relative z-10 max-w-5xl w-full bg-gray-800 rounded-2xl shadow-2xl overflow-hidden flex flex-col md:flex-row border border-gray-700">
+        
+        <!-- Side Column: Movie Poster & Title (แสดงข้อมูลหนังฝั่งซ้าย) -->
+        <div class="md:w-1/3 bg-gray-900/50 p-8 flex flex-col items-center justify-center text-center border-b md:border-b-0 md:border-r border-gray-700 relative overflow-hidden">
+             <!-- Background Blur Effect in Card -->
+            <div class="absolute inset-0 z-0">
+                {% if movie.poster_path %}
+                    <img src="https://image.tmdb.org/t/p/w500{{ movie.poster_path }}" class="w-full h-full object-cover opacity-20 filter blur-lg scale-110">
+                {% elif movie.poster_url %}
+                    <img src="{{ movie.poster_url }}" class="w-full h-full object-cover opacity-20 filter blur-lg scale-110">
+                {% else %}
+                    <div class="w-full h-full bg-gradient-to-br from-yellow-900/20 to-gray-900"></div>
+                {% endif %}
+            </div>
+            
+            <div class="relative z-10">
+                <div class="w-40 mx-auto rounded-lg shadow-2xl overflow-hidden mb-6 transform rotate-3 hover:rotate-0 transition duration-500 border border-gray-600 group">
+                    {% if movie.poster_path %}
+                        <img src="https://image.tmdb.org/t/p/w500{{ movie.poster_path }}" alt="{{ movie.title }}" class="w-full h-auto group-hover:scale-105 transition duration-500">
+                    {% elif movie.poster_url %}
+                        <img src="{{ movie.poster_url }}" alt="{{ movie.title }}" class="w-full h-auto group-hover:scale-105 transition duration-500">
+                    {% else %}
+                        <div class="bg-gray-700 w-full h-60 flex items-center justify-center text-gray-500">No Image</div>
+                    {% endif %}
+                </div>
+                <h2 class="text-2xl font-bold text-white mb-2 drop-shadow-md">{{ movie.title }}</h2>
+                <p class="text-sm text-gray-400">({{ movie.release_date|slice:":4" }})</p>
             </div>
         </div>
 
-        <!-- Rating -->
-        <div>
-            <label class="block text-lg font-semibold mb-2 text-gray-300">คะแนนความชอบส่วนตัว (เต็ม 10)</label>
-            {{ form.rating }}
-        </div>
+        <!-- Main Column: Review Form -->
+        <div class="md:w-2/3 p-8 md:p-12 bg-gray-800 relative">
+            <h2 class="text-2xl font-bold mb-8 text-white flex items-center">
+                <svg class="w-6 h-6 mr-3 text-yellow-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg>
+                บันทึกความรู้สึก
+            </h2>
 
-        <!-- Review Text -->
-        <div>
-            <label class="block text-lg font-semibold mb-2 text-gray-300">เล่าเพิ่มเติม (ถ้าอยากเล่า)</label>
-            {{ form.review_text }}
-        </div>
+            <form method="post" class="space-y-8">
+                {% csrf_token %}
+                
+                <!-- Mood Select -->
+                <div class="space-y-2">
+                    <label class="block text-sm font-medium text-gray-300">
+                        อารมณ์หลักของหนังเรื่องนี้
+                    </label>
+                    <div class="relative">
+                        {{ form.primary_mood }}
+                    </div>
+                </div>
 
-        <button type="submit" class="w-full bg-yellow-500 hover:bg-yellow-600 text-gray-900 font-bold py-3 px-6 rounded-lg transition duration-300 transform hover:scale-[1.02]">
-            บันทึกความรู้สึก
-        </button>
-    </form>
+                <!-- Intensity Slider (ปรับปรุงใหม่ให้ดูง่ายขึ้น) -->
+                <div class="bg-gray-900/50 p-6 rounded-xl border border-gray-700">
+                    <div class="flex justify-between items-center mb-6">
+                        <label class="text-sm font-medium text-gray-300">ระดับความเข้มข้น</label>
+                        <!-- Badge แสดงค่าแบบเรียบง่าย -->
+                        <div class="flex items-center gap-2 bg-gray-800 px-4 py-1.5 rounded-lg border border-gray-600 shadow-sm">
+                             <span id="intensity-display" class="text-xl font-bold text-yellow-500">3</span>
+                             <span class="text-gray-600">|</span>
+                             <span id="intensity-text" class="text-sm text-gray-300 font-medium">ปานกลาง</span>
+                        </div>
+                    </div>
+                    
+                    <div class="relative h-8 flex items-center mb-2">
+                        {{ form.mood_intensity }}
+                    </div>
+                    
+                    <div class="flex justify-between text-xs text-gray-500 font-medium px-1">
+                        <span>เบาบาง (1)</span>
+                        <span>มากที่สุด (5)</span>
+                    </div>
+                </div>
+
+                <!-- Rating -->
+                <div class="space-y-2">
+                    <label class="block text-sm font-medium text-gray-300">คะแนนความชอบ (0 - 10)</label>
+                    {{ form.rating }}
+                </div>
+
+                <!-- Text Area -->
+                <div class="space-y-2">
+                    <label class="block text-sm font-medium text-gray-300">เล่าเพิ่มเติม (ถ้าอยากเล่า)</label>
+                    {{ form.review_text }}
+                </div>
+
+                <!-- Submit Button -->
+                <div class="pt-4">
+                    <button type="submit" class="w-full bg-gradient-to-r from-yellow-500 to-yellow-600 hover:from-yellow-400 hover:to-yellow-500 text-gray-900 font-bold py-4 px-6 rounded-xl transition duration-300 transform hover:scale-[1.01] shadow-lg flex items-center justify-center">
+                        <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+                        บันทึกรีวิว
+                    </button>
+                    <a href="javascript:history.back()" class="block text-center text-gray-500 hover:text-gray-300 text-sm mt-4 transition">ยกเลิกและย้อนกลับ</a>
+                </div>
+            </form>
+        </div>
+    </div>
 </div>
 
+<style>
+    /* Custom Styling for Django Form Widgets to match Dark Theme */
+    form select, form input[type="text"], form input[type="number"], form textarea {
+        width: 100%;
+        background-color: #374151; /* gray-700 */
+        border: 1px solid #4b5563; /* gray-600 */
+        color: white;
+        padding: 0.75rem;
+        border-radius: 0.5rem;
+        outline: none;
+        transition: all 0.2s;
+        font-size: 1rem;
+    }
+    form select:focus, form input:focus, form textarea:focus {
+        border-color: #eab308; /* yellow-500 */
+        box-shadow: 0 0 0 2px rgba(234, 179, 8, 0.3);
+    }
+
+    /* Range Slider Customization */
+    input[type=range] {
+        appearance: none;
+        -webkit-appearance: none;
+        width: 100%;
+        background: transparent;
+        cursor: pointer;
+    }
+    
+    /* Chrome/Safari/Edge Thumb */
+    input[type=range]::-webkit-slider-thumb {
+        -webkit-appearance: none;
+        height: 24px;
+        width: 24px;
+        border-radius: 50%;
+        background: #eab308;
+        cursor: pointer;
+        margin-top: -10px;
+        box-shadow: 0 0 10px rgba(234,179,8,0.5);
+        border: 2px solid #1f2937;
+        transition: transform 0.1s;
+    }
+    input[type=range]::-webkit-slider-thumb:hover {
+        transform: scale(1.1);
+    }
+
+    /* Track */
+    input[type=range]::-webkit-slider-runnable-track {
+        width: 100%;
+        height: 6px;
+        cursor: pointer;
+        background: #4b5563;
+        border-radius: 999px;
+    }
+    
+    /* Firefox Styling */
+    input[type=range]::-moz-range-thumb {
+        height: 24px;
+        width: 24px;
+        border-radius: 50%;
+        background: #eab308;
+        cursor: pointer;
+        border: 2px solid #1f2937;
+    }
+    input[type=range]::-moz-range-track {
+        width: 100%;
+        height: 6px;
+        cursor: pointer;
+        background: #4b5563;
+        border-radius: 999px;
+    }
+</style>
+
 <script>
-    // Script ง่ายๆ เพื่อโชว์ตัวเลข Slider แบบ Real-time
+    // Script สำหรับโชว์ค่า Slider และคำอธิบาย
     const slider = document.querySelector('input[type="range"]');
-    const output = document.getElementById('intensity-value');
-    if (slider && output) {
-        output.textContent = slider.value;
-        slider.oninput = function() {
-            output.textContent = this.value;
+    const display = document.getElementById('intensity-display');
+    const textDisplay = document.getElementById('intensity-text');
+    
+    // คำอธิบายแต่ละระดับ
+    const descriptions = {
+        1: 'เบาบาง',
+        2: 'น้อย',
+        3: 'ปานกลาง',
+        4: 'มาก',
+        5: 'มากที่สุด'
+    };
+
+    if (slider && display && textDisplay) {
+        // ตั้งค่าเริ่มต้น
+        updateDisplay(slider.value);
+        
+        slider.addEventListener('input', function() {
+            updateDisplay(this.value);
+        });
+
+        function updateDisplay(val) {
+            display.textContent = val;
+            textDisplay.textContent = descriptions[val];
+            
+            // เปลี่ยนสีตัวเลขตามค่า (ลูกเล่นเล็กๆ)
+            if(val <= 2) {
+                display.className = "text-xl font-bold text-green-400 transition-colors duration-300";
+            } else if(val <= 4) {
+                display.className = "text-xl font-bold text-yellow-500 transition-colors duration-300"; 
+            } else {
+                display.className = "text-xl font-bold text-red-500 transition-colors duration-300";
+            }
         }
     }
 </script>

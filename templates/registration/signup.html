@@ -3,59 +3,85 @@
 {% block title %}สมัครสมาชิก | Mood2Movie{% endblock %}
 
 {% block content %}
-<div class="flex justify-center items-center min-h-[80vh]"> <!-- จัดให้อยู่กึ่งกลางแนวตั้ง -->
-    <div class="bg-gray-800 p-8 rounded-2xl shadow-2xl w-full max-w-md border border-gray-700">
-        <div class="text-center mb-8">
-            <h1 class="text-3xl font-bold text-yellow-500 mb-2">สร้างบัญชีใหม่ 🚀</h1>
-            <p class="text-gray-400">เข้าร่วมชุมชนคนรักหนังและแบ่งปันอารมณ์ของคุณ</p>
+<div class="min-h-[90vh] flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
+    
+    <div class="flex w-full max-w-5xl bg-gray-800 rounded-2xl shadow-2xl overflow-hidden border border-gray-700">
+        
+        <!-- ฝั่งซ้าย: รูปภาพ/Art (ซ่อนในมือถือ) -->
+        <div class="hidden md:block w-1/2 relative">
+            <!-- เปลี่ยน src เป็นรูปจาก Unsplash (โรงหนัง) ที่โหลดติดแน่นอน -->
+            <img src="https://images.unsplash.com/photo-1489599849927-2ee91cede3ba?q=80&w=2070&auto=format&fit=crop" alt="Movie Backdrop" class="absolute inset-0 w-full h-full object-cover opacity-50 filter grayscale hover:grayscale-0 transition duration-700">
+            <div class="absolute inset-0 bg-gradient-to-r from-gray-900/90 to-gray-800/20"></div>
+            
+            <div class="relative z-10 h-full flex flex-col justify-center px-12 text-white">
+                <h2 class="text-4xl font-bold mb-4 text-yellow-500">ยินดีต้อนรับสู่<br>Mood2Movie</h2>
+                <p class="text-gray-300 text-lg mb-8">ค้นหาหนังที่ใช่ ตามอารมณ์ของคุณ<br>เข้าร่วมคอมมูนิตี้คนรักหนังวันนี้</p>
+                
+                <div class="flex items-center space-x-2 text-sm text-gray-400">
+                    <span class="w-8 h-1 bg-yellow-500 rounded-full"></span>
+                    <span>Free Forever</span>
+                </div>
+            </div>
         </div>
 
-        <form method="post" class="space-y-6">
-            {% csrf_token %}
+        <!-- ฝั่งขวา: ฟอร์มสมัครสมาชิก -->
+        <div class="w-full md:w-1/2 p-8 md:p-12 bg-gray-800">
             
-            <!-- วนลูปแสดงฟิลด์ต่างๆ ของแบบฟอร์ม -->
-            {% for field in form %}
-            <div>
-                <label for="{{ field.id_for_label }}" class="block text-sm font-medium text-gray-300 mb-2">
-                    {{ field.label }}
-                    {% if field.field.required %}<span class="text-red-500">*</span>{% endif %}
-                </label>
-                
-                <input type="{{ field.field.widget.input_type }}" 
-                       name="{{ field.name }}" 
-                       id="{{ field.id_for_label }}"
-                       class="w-full px-4 py-3 bg-gray-900 border border-gray-700 rounded-lg focus:ring-2 focus:ring-yellow-500 focus:border-transparent text-white placeholder-gray-500 transition duration-200 {% if field.errors %}border-red-500{% endif %}"
-                       {% if field.value %}value="{{ field.value }}"{% endif %}
-                       {% if field.field.required %}required{% endif %}
-                       placeholder="{{ field.help_text|striptags }}"> <!-- เอา help_text มาเป็น placeholder ชั่วคราว -->
-
-                {% if field.help_text and not field.errors %}
-                    <p class="mt-1 text-xs text-gray-500">{{ field.help_text|safe }}</p>
-                {% endif %}
-
-                {% for error in field.errors %}
-                    <p class="mt-1 text-sm text-red-500 flex items-center">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" viewBox="0 0 20 20" fill="currentColor">
-                            <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clip-rule="evenodd" />
-                        </svg>
-                        {{ error }}
-                    </p>
-                {% endfor %}
+            <div class="text-center md:text-left mb-8">
+                <h1 class="text-2xl font-bold text-white mb-2">สร้างบัญชีใหม่</h1>
+                <p class="text-gray-400 text-sm">กรอกข้อมูลเพื่อเริ่มต้นใช้งาน</p>
             </div>
-            {% endfor %}
 
-            <button type="submit" class="w-full bg-yellow-500 hover:bg-yellow-400 text-gray-900 font-bold py-3 px-4 rounded-lg transition duration-300 transform hover:scale-[1.02] focus:outline-none focus:ring-4 focus:ring-yellow-500/50 shadow-lg">
-                สมัครสมาชิกเลย!
-            </button>
-        </form>
+            <form method="post" class="space-y-4">
+                {% csrf_token %}
+                
+                {% for field in form %}
+                <div>
+                    <!-- Label -->
+                    <label for="{{ field.id_for_label }}" class="block text-sm font-medium text-gray-300 mb-1">
+                        {{ field.label }} {% if field.field.required %}<span class="text-red-500">*</span>{% endif %}
+                    </label>
+                    
+                    <!-- Input -->
+                    <div class="relative">
+                        <input type="{{ field.field.widget.input_type }}" 
+                               name="{{ field.name }}" 
+                               id="{{ field.id_for_label }}"
+                               class="w-full px-4 py-2.5 bg-gray-900/50 border border-gray-600 rounded-lg focus:ring-2 focus:ring-yellow-500 focus:border-yellow-500 text-white placeholder-gray-500 text-sm transition-all outline-none {% if field.errors %}border-red-500{% endif %}"
+                               {% if field.value %}value="{{ field.value }}"{% endif %}
+                               autocomplete="off">
+                    </div>
 
-        <div class="mt-8 pt-6 border-t border-gray-700 text-center">
-            <p class="text-gray-400">
-                มีบัญชีอยู่แล้วใช่ไหม? 
-                <a href="{% url 'login' %}" class="text-yellow-500 hover:text-yellow-400 font-semibold ml-1 transition">
-                    เข้าสู่ระบบที่นี่
+                    <!-- Error Messages -->
+                    {% if field.errors %}
+                        {% for error in field.errors %}
+                            <p class="mt-1 text-xs text-red-400 flex items-center">
+                                <svg class="w-3 h-3 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                                {{ error }}
+                            </p>
+                        {% endfor %}
+                    {% endif %}
+
+                    <!-- Help Text -->
+                    {% if field.help_text %}
+                        <p class="mt-1 text-[10px] text-gray-500 leading-tight opacity-70 hover:opacity-100 transition-opacity">
+                            {{ field.help_text|striptags }}
+                        </p>
+                    {% endif %}
+                </div>
+                {% endfor %}
+
+                <button type="submit" class="w-full bg-yellow-500 hover:bg-yellow-400 text-gray-900 font-bold py-3 px-4 rounded-lg transition-all shadow-lg hover:shadow-yellow-500/20 mt-6">
+                    สมัครสมาชิก
+                </button>
+            </form>
+
+            <div class="mt-6 text-center text-sm text-gray-400">
+                มีบัญชีอยู่แล้ว? 
+                <a href="{% url 'login' %}" class="text-yellow-500 hover:text-yellow-300 font-semibold hover:underline">
+                    เข้าสู่ระบบ
                 </a>
-            </p>
+            </div>
         </div>
     </div>
 </div>

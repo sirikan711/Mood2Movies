@@ -1,36 +1,78 @@
 {% extends 'base.html' %}
 
+{% block title %}เข้าสู่ระบบ | Mood2Movie{% endblock %}
+
 {% block content %}
-<div class="flex justify-center items-center h-full">
-    <div class="bg-gray-800 p-8 rounded-lg shadow-lg w-full max-w-md">
-        <h2 class="text-3xl font-bold mb-6 text-center text-yellow-500">เข้าสู่ระบบ</h2>
-        <form method="post">
-            {% csrf_token %}
-            <!-- ใช้ Django Form แต่จัดหน้าตาด้วย Tailwind -->
-            {% for field in form %}
-            <div class="mb-4">
-                <label for="{{ field.id_for_label }}" class="block text-gray-300 text-sm font-bold mb-2">
-                    {{ field.label }}
-                </label>
-                <input type="{{ field.field.widget.input_type }}" 
-                       name="{{ field.name }}" 
-                       id="{{ field.id_for_label }}"
-                       class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
-                       {% if field.value %}value="{{ field.value }}"{% endif %}>
-                {% if field.errors %}
-                    <p class="text-red-500 text-xs italic">{{ field.errors.0 }}</p>
-                {% endif %}
+<div class="min-h-[85vh] flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
+    
+    <div class="flex w-full max-w-5xl bg-gray-800 rounded-2xl shadow-2xl overflow-hidden border border-gray-700">
+        
+        <!-- ฝั่งซ้าย: รูปภาพ (ซ่อนในมือถือ) -->
+        <div class="hidden md:block w-1/2 relative">
+            <!-- เปลี่ยนรูปภาพใหม่ เป็นรูปม้วนฟิล์มที่สื่อถึงภาพยนตร์ -->
+            <img src="https://images.unsplash.com/photo-1485846234645-a62644f84728?q=80&w=2059&auto=format&fit=crop" alt="Movie Film Reel" class="absolute inset-0 w-full h-full object-cover opacity-50 filter grayscale hover:grayscale-0 transition duration-700">
+            <div class="absolute inset-0 bg-gradient-to-r from-gray-900/90 to-gray-800/20"></div>
+            
+            <div class="relative z-10 h-full flex flex-col justify-center px-12 text-white">
+                <h2 class="text-4xl font-bold mb-4 text-yellow-500">ยินดีต้อนรับกลับมา!</h2>
+                <p class="text-gray-300 text-lg">ล็อกอินเพื่อบันทึกหนังที่ชอบ<br>เขียนรีวิว และค้นหาหนังเรื่องถัดไปของคุณ</p>
             </div>
-            {% endfor %}
-            <div class="flex items-center justify-between">
-                <button class="bg-yellow-500 hover:bg-yellow-600 text-gray-900 font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline w-full transition" type="submit">
+        </div>
+
+        <!-- ฝั่งขวา: ฟอร์มเข้าสู่ระบบ -->
+        <div class="w-full md:w-1/2 p-8 md:p-12 bg-gray-800 flex flex-col justify-center">
+            
+            <div class="text-center md:text-left mb-8">
+                <h1 class="text-3xl font-bold text-white mb-2">เข้าสู่ระบบ</h1>
+                <p class="text-gray-400 text-sm">กรอกชื่อผู้ใช้และรหัสผ่านของคุณ</p>
+            </div>
+
+            <form method="post" class="space-y-6">
+                {% csrf_token %}
+                
+                <!-- แสดง Error รวม (เช่น รหัสผ่านผิด) -->
+                {% if form.non_field_errors %}
+                <div class="bg-red-900/30 border border-red-500 text-red-200 px-4 py-3 rounded-lg text-sm flex items-start animate-pulse">
+                    <svg class="w-5 h-5 mr-2 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                    <div>
+                        {% for error in form.non_field_errors %}
+                            <p>{{ error }}</p>
+                        {% endfor %}
+                    </div>
+                </div>
+                {% endif %}
+
+                {% for field in form %}
+                <div>
+                    <label for="{{ field.id_for_label }}" class="block text-sm font-medium text-gray-300 mb-1">
+                        {{ field.label }}
+                    </label>
+                    <div class="relative">
+                        <input type="{{ field.field.widget.input_type }}" 
+                               name="{{ field.name }}" 
+                               id="{{ field.id_for_label }}"
+                               class="w-full px-4 py-3 bg-gray-900/50 border border-gray-600 rounded-lg focus:ring-2 focus:ring-yellow-500 focus:border-yellow-500 text-white placeholder-gray-500 transition-all outline-none {% if field.errors %}border-red-500{% endif %}"
+                               {% if field.value %}value="{{ field.value }}"{% endif %}
+                               autocomplete="current-password"> <!-- ช่วย Browser จำรหัส -->
+                    </div>
+                    {% if field.errors %}
+                        <p class="mt-1 text-xs text-red-400">{{ field.errors.0 }}</p>
+                    {% endif %}
+                </div>
+                {% endfor %}
+
+                <button type="submit" class="w-full bg-yellow-500 hover:bg-yellow-400 text-gray-900 font-bold py-3.5 px-4 rounded-lg transition-all duration-300 transform hover:-translate-y-0.5 shadow-lg hover:shadow-yellow-500/20 mt-2">
                     เข้าสู่ระบบ
                 </button>
+            </form>
+
+            <div class="mt-8 pt-6 border-t border-gray-700 text-center text-sm text-gray-400">
+                ยังไม่มีบัญชีใช่ไหม? 
+                <a href="{% url 'signup' %}" class="text-yellow-500 hover:text-yellow-300 font-semibold ml-1 hover:underline decoration-yellow-500">
+                    สมัครสมาชิกฟรี
+                </a>
             </div>
-        </form>
-        <p class="text-center text-gray-400 mt-4">
-            ยังไม่มีบัญชี? <a href="{% url 'signup' %}" class="text-yellow-500 hover:underline">สมัครสมาชิก</a>
-        </p>
+        </div>
     </div>
 </div>
 {% endblock %}

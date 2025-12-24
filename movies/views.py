@@ -8,8 +8,8 @@ from django.http import JsonResponse
 from django.views.decorators.http import require_POST
 from django.contrib.auth.models import User
 
-from .models import Movie, Review, Mood, Favorite, Bookmark
-from .forms import ReviewForm
+from .models import Movie, Review, Mood, Favorite, Bookmark, CustomList
+from .forms import ReviewForm, CustomListForm
 from .utils import search_movies_tmdb, get_movie_details_tmdb, get_tmdb_genres
 
 # ==========================================
@@ -74,28 +74,32 @@ def search_movies(request):
     })
 
 def movie_detail(request, tmdb_id):
-    """แสดงรายละเอียดภาพยนตร์และรีวิว"""
-    # พยายามหาหนังใน DB เราก่อน
+    """แสดงรายละเอียดภาพยนตร์และรีวิว (อัปเดตใหม่ รองรับ List)"""
     movie = Movie.objects.filter(tmdb_id=tmdb_id).first()
-    
-    # ดึงข้อมูลสดจาก TMDb เสมอเพื่อความชัวร์เรื่องรายละเอียด
     tmdb_data = get_movie_details_tmdb(tmdb_id)
     
     if not tmdb_data:
          return render(request, '404.html')
     
     reviews = []
-    similar_movies = [] # เผื่ออนาคตทำระบบแนะนำเพิ่มเติม
     is_favorited = False
     is_bookmarked = False
+    user_lists = [] # เตรียมตัวแปรไว้เก็บ List ของ User
 
     if movie:
-        # ดึงรีวิวพร้อมข้อมูล User และ Profile เพื่อลด Query
         reviews = movie.reviews.select_related('user', 'user__profile', 'primary_mood').order_by('-created_at')
         
         if request.user.is_authenticated:
             is_favorited = Favorite.objects.filter(user=request.user, movie=movie).exists()
             is_bookmarked = Bookmark.objects.filter(user=request.user, movie=movie).exists()
+            
+            # ดึง List ทั้งหมดของ User พร้อมเช็คว่าหนังเรื่องนี้อยู่ใน List นั้นหรือยัง
+            user_lists = request.user.custom_lists.all().annotate(
+                has_movie=Count('movies', filter=Q(movies__id=movie.id))
+            )
+    elif request.user.is_authenticated:
+        # ถ้าหนังยังไม่มีใน DB เรา (แต่ User ล็อกอินอยู่) ก็ดึง List มาแสดงได้ (แต่สถานะ has_movie เป็น 0 หมด)
+        user_lists = request.user.custom_lists.all()
 
     context = {
         'movie_db': movie,
@@ -103,6 +107,7 @@ def movie_detail(request, tmdb_id):
         'reviews': reviews,
         'is_favorited': is_favorited,
         'is_bookmarked': is_bookmarked,
+        'user_lists': user_lists, # ส่ง List ไปหน้า Detail
     }
     return render(request, 'movies/detail.html', context)
 
@@ -322,6 +327,115 @@ def admin_reviews(request):
         )
 
     return render(request, 'movies/admin/reviews.html', {'reviews': reviews, 'query': query})
+
+# ==========================================
+# 4. CUSTOM LIST MANAGEMENT
+# ==========================================
+
+@login_required
+def my_lists(request):
+    """หน้าแสดงรายการ List ทั้งหมดของฉัน"""
+    lists = request.user.custom_lists.all().annotate(movie_count=Count('movies')).order_by('-created_at')
+    return render(request, 'movies/lists/my_lists.html', {'lists': lists})
+
+@login_required
+def create_list(request):
+    """สร้าง List ใหม่"""
+    if request.method == 'POST':
+        form = CustomListForm(request.POST)
+        if form.is_valid():
+            custom_list = form.save(commit=False)
+            custom_list.user = request.user
+            custom_list.save()
+            messages.success(request, f'สร้างรายการ "{custom_list.name}" เรียบร้อยแล้ว')
+            return redirect('my_lists')
+    else:
+        form = CustomListForm()
+    
+    return render(request, 'movies/lists/create_list.html', {'form': form})
+
+@login_required
+def list_detail(request, list_id):
+    """ดูรายละเอียดใน List"""
+    custom_list = get_object_or_404(CustomList, id=list_id)
+    
+    # เช็คสิทธิ์: ต้องเป็นเจ้าของ หรือ List ต้องเป็น Public
+    if not custom_list.is_public and request.user != custom_list.user:
+        messages.error(request, 'คุณไม่สามารถเข้าถึงรายการส่วนตัวนี้ได้')
+        return redirect('home')
+
+    movies = custom_list.movies.all()
+    return render(request, 'movies/lists/list_detail.html', {'custom_list': custom_list, 'movies': movies})
+
+@login_required
+def delete_list(request, list_id):
+    """ลบ List"""
+    custom_list = get_object_or_404(CustomList, id=list_id, user=request.user)
+    custom_list.delete()
+    messages.success(request, 'ลบรายการเรียบร้อยแล้ว')
+    return redirect('my_lists')
+
+@login_required
+def remove_movie_from_list(request, list_id, movie_id):
+    """ลบหนังออกจาก List"""
+    custom_list = get_object_or_404(CustomList, id=list_id, user=request.user)
+    movie = get_object_or_404(Movie, id=movie_id)
+    
+    custom_list.movies.remove(movie)
+    messages.success(request, f'ลบ "{movie.title}" ออกจากรายการแล้ว')
+    return redirect('list_detail', list_id=list_id)
+
+@login_required
+def edit_list(request, list_id):
+    """แก้ไขรายการหนัง (เฉพาะเจ้าของ)"""
+    custom_list = get_object_or_404(CustomList, id=list_id)
+
+    # เช็คสิทธิ์ความเป็นเจ้าของ
+    if request.user != custom_list.user:
+        messages.error(request, 'คุณไม่มีสิทธิ์แก้ไขรายการนี้')
+        return redirect('my_lists')
+
+    if request.method == 'POST':
+        form = CustomListForm(request.POST, instance=custom_list)
+        if form.is_valid():
+            form.save()
+            messages.success(request, f'แก้ไขรายการ "{custom_list.name}" เรียบร้อยแล้ว')
+            return redirect('list_detail', list_id=custom_list.id)
+    else:
+        form = CustomListForm(instance=custom_list) # ดึงข้อมูลเดิมมาใส่ฟอร์ม
+
+    return render(request, 'movies/lists/edit_list.html', {'form': form, 'custom_list': custom_list})
+
+@login_required
+@require_POST
+def toggle_list_movie(request, list_id, tmdb_id):
+    """Toggle Add/Remove Movie from List (AJAX) - ใช้ในหน้า Detail"""
+    custom_list = get_object_or_404(CustomList, id=list_id, user=request.user)
+    
+    # หาหรือสร้างหนัง
+    movie = Movie.objects.filter(tmdb_id=tmdb_id).first()
+    if not movie:
+        tmdb_data = get_movie_details_tmdb(tmdb_id)
+        if tmdb_data:
+            movie = Movie.objects.create(
+                tmdb_id=tmdb_data['tmdb_id'],
+                title=tmdb_data['title'],
+                poster_path=tmdb_data['poster_path'],
+                overview=tmdb_data.get('overview', ''),
+                release_date=tmdb_data.get('release_date')
+            )
+        else:
+             return JsonResponse({'status': 'error', 'message': 'Movie not found'}, status=404)
+
+    # เช็คว่ามีหนังนี้ในลิสต์ไหม
+    if custom_list.movies.filter(id=movie.id).exists():
+        custom_list.movies.remove(movie)
+        status = 'removed'
+    else:
+        custom_list.movies.add(movie)
+        status = 'added'
+
+    return JsonResponse({'status': status, 'list_name': custom_list.name})
 
 # --- Admin Delete Actions ---
 

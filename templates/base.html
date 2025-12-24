@@ -27,30 +27,38 @@
         .fade-out {
             animation: fadeOut 0.5s ease-out forwards;
         }
+        /* Custom Animations */
+        @keyframes fadeInUp {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .animate-fade-in-up {
+            animation: fadeInUp 0.5s ease-out forwards;
+        }
     </style>
 </head>
 <body class="bg-gray-900 text-gray-100 min-h-screen flex flex-col">
 
     <!-- Navbar -->
     <nav class="bg-gray-800 border-b border-gray-700 shadow-lg sticky top-0 z-50">
-        <div class="container mx-auto px-4">
+        <div class="w-full max-w-screen-2xl mx-auto px-4 md:px-8">
             <div class="flex justify-between items-center h-16">
                 
                 <!-- โลโก้ -->
                 <a href="{% url 'home' %}" class="flex items-center space-x-2 group">
-                    <span class="text-3xl"></span>
                     <span class="text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-yellow-400 to-yellow-600 group-hover:from-yellow-300 group-hover:to-yellow-500 transition">
                         Mood2Movie
                     </span>
                 </a>
-                <!-- Desktop Menu (ซ่อนในมือถือ) -->
+
+                <!-- Desktop Menu -->
                 <div class="hidden md:flex space-x-8 items-center">
                     <a href="{% url 'home' %}" class="hover:text-yellow-400 transition font-medium">หน้าแรก</a>
                     <a href="{% url 'search_movies' %}" class="hover:text-yellow-400 transition font-medium">ค้นหาหนัง</a>
                     
                     {% if user.is_authenticated %}
                         <div class="flex items-center space-x-4 ml-4 border-l border-gray-600 pl-4">
-
+                            
                             <!-- ปุ่ม Admin (แสดงเฉพาะ Superuser) -->
                             {% if user.is_superuser %}
                                 <a href="{% url 'admin_dashboard' %}" class="flex items-center space-x-1 bg-red-900/30 hover:bg-red-900/50 text-red-400 hover:text-red-300 px-3 py-1.5 rounded-lg border border-red-500/30 transition mr-2" title="จัดการระบบ">
@@ -62,7 +70,13 @@
                                 </a>
                             {% endif %}
 
-                            <a href="{% url 'profile' %}" class="flex items-center space-x-2 hover:text-yellow-400 transition group">
+                            <!-- เมนู My Lists -->
+                            <a href="{% url 'my_lists' %}" class="flex items-center space-x-1 text-gray-300 hover:text-yellow-400 transition" title="รายการของฉัน">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path></svg>
+                                <span class="font-medium hidden lg:inline">My Lists</span>
+                            </a>
+
+                            <a href="{% url 'profile' %}" class="flex items-center space-x-2 hover:text-yellow-400 transition group ml-4">
                                 {% if user.profile.avatar %}
                                     <img src="{{ user.profile.avatar.url }}" class="w-8 h-8 rounded-full border border-gray-500 group-hover:border-yellow-400 object-cover">
                                 {% else %}
@@ -74,7 +88,7 @@
                             </a>
                             <form action="{% url 'logout' %}" method="post" class="inline">
                                 {% csrf_token %}
-                                <button type="submit" class="bg-red-600 hover:bg-red-700 text-white px-4 py-1.5 rounded-full text-sm transition shadow-md">
+                                <button type="submit" class="bg-red-600 hover:bg-red-700 text-white px-4 py-1.5 rounded-full text-sm transition shadow-md ml-2">
                                     ออกจากระบบ
                                 </button>
                             </form>
@@ -89,7 +103,7 @@
                     {% endif %}
                 </div>
 
-                <!-- Mobile Menu Button (แสดงเฉพาะมือถือ) -->
+                <!-- Mobile Menu Button -->
                 <button id="mobile-menu-btn" class="md:hidden text-gray-300 hover:text-white focus:outline-none">
                     <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path>
@@ -98,15 +112,27 @@
             </div>
         </div>
 
-        <!-- Mobile Menu Dropdown (ซ่อนโดย Default) -->
+        <!-- Mobile Menu Dropdown -->
         <div id="mobile-menu" class="hidden md:hidden bg-gray-700 border-t border-gray-600">
             <div class="flex flex-col p-4 space-y-3">
                 <a href="{% url 'home' %}" class="block py-2 hover:text-yellow-400 border-b border-gray-600">หน้าแรก</a>
                 <a href="{% url 'search_movies' %}" class="block py-2 hover:text-yellow-400 border-b border-gray-600">ค้นหาหนัง</a>
                 
                 {% if user.is_authenticated %}
+                    
+                    <!-- Admin Mobile -->
+                    {% if user.is_superuser %}
+                        <a href="{% url 'admin_dashboard' %}" class="block py-2 text-red-400 hover:text-red-300 font-bold flex items-center border-b border-gray-600">
+                            <span class="mr-2">จัดการระบบ (Admin)</span>
+                        </a>
+                    {% endif %}
+
+                    <a href="{% url 'my_lists' %}" class="block py-2 hover:text-yellow-400 font-bold flex items-center border-b border-gray-600">
+                        <span class="mr-2">รายการของฉัน</span>
+                    </a>
+
                     <a href="{% url 'profile' %}" class="block py-2 hover:text-yellow-400 font-bold flex items-center">
-                        <span class="mr-2"></span> โปรไฟล์ของฉัน
+                        <span class="mr-2">โปรไฟล์ของฉัน</span>
                     </a>
                     <form action="{% url 'logout' %}" method="post" class="block">
                         {% csrf_token %}
@@ -122,8 +148,8 @@
         </div>
     </nav>
 
-    <!-- Main Content (ใช้ flex-grow เพื่อดัน footer ลงล่างสุดเสมอ) -->
-    <main class="flex-grow container mx-auto p-4 md:p-8">
+    <!-- Main Content -->
+    <main class="flex-grow w-full max-w-screen-2xl mx-auto p-4 md:p-8">
         <!-- Messages Area -->
         {% if messages %}
             <div id="message-container" class="mb-6 space-y-2 max-w-4xl mx-auto">
@@ -149,18 +175,17 @@
     </main>
 
     <!-- Footer -->
-    <footer class="bg-gray-800 p-8 mt-12 text-center text-gray-400 border-t border-gray-700">
-        <div class="max-w-6xl mx-auto">
-            <div class="mb-6 flex justify-center items-center">
-                <!-- <span class="text-3xl animate-bounce">🎬</span>  -->
-                <span class="text-xl font-bold text-yellow-500 ml-2 tracking-wider">Mood2Movie</span>
+    <footer class="bg-gray-800 border-t border-gray-700 mt-auto">
+        <div class="w-full max-w-screen-2xl mx-auto p-6 text-center text-gray-400">
+            <div class="mb-4 flex justify-center items-center">
+                <span class="text-xl font-bold text-yellow-500 tracking-wider">Mood2Movie</span>
             </div>
             
-            <p class="mb-6 text-sm text-gray-400">
+            <p class="mb-4 text-sm text-gray-400">
                 โปรเจกต์แนะนำภาพยนตร์ตามอารมณ์ (DSSI Year 3)<br>
             </p>
             
-            <div class="flex justify-center gap-6 mb-8 text-sm font-medium">
+            <div class="flex justify-center gap-6 mb-6 text-sm font-medium">
                 <a href="#" class="hover:text-yellow-500 transition hover:underline">เกี่ยวกับเรา</a>
                 <a href="#" class="hover:text-yellow-500 transition hover:underline">ติดต่อ</a>
                 <a href="https://github.com/sirikan711/Mood2Movies" target="_blank" class="hover:text-white transition flex items-center gap-1 hover:underline">

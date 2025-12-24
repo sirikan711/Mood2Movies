@@ -49,15 +49,19 @@
                     <p class="text-gray-300 text-lg leading-relaxed font-light">{{ movie_tmdb.overview|default:"ไม่มีข้อมูลเรื่องย่อภาษาไทย" }}</p>
                 </div>
 
-                <!-- Action Buttons (SVG Icons แทน Emojis) -->
-                <div class="flex flex-col sm:flex-row flex-wrap gap-4 justify-center md:justify-start">
-                    <a href="{% url 'add_review' movie_tmdb.tmdb_id %}" class="bg-gradient-to-r from-yellow-500 to-yellow-600 hover:from-yellow-400 hover:to-yellow-500 text-gray-900 font-bold py-3 px-8 rounded-full transition transform hover:scale-105 shadow-lg flex items-center justify-center group">
+                <!-- Action Buttons -->
+                <div class="flex flex-col sm:flex-row flex-wrap gap-4 justify-center md:justify-start items-center">
+                    
+                    <!-- 1. เขียนรีวิว -->
+                    <a href="{% url 'add_review' movie_tmdb.tmdb_id %}" class="bg-gradient-to-r from-yellow-500 to-yellow-600 hover:from-yellow-400 hover:to-yellow-500 text-gray-900 font-bold py-3 px-8 rounded-full transition transform hover:scale-105 shadow-lg flex items-center justify-center group h-12">
                         <svg class="w-5 h-5 mr-2 transition-transform group-hover:rotate-12" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg>
                         เขียนรีวิว
                     </a>
                     
                     {% if user.is_authenticated %}
-                        <button id="fav-btn" data-tmdb-id="{{ movie_tmdb.tmdb_id }}" class="bg-gray-800/80 hover:bg-gray-700 backdrop-blur border border-gray-600 text-white font-medium py-3 px-6 rounded-full transition flex items-center justify-center gap-2 min-w-[140px] {% if is_favorited %}border-pink-500 bg-pink-900/20 text-pink-400{% endif %}">
+                        
+                        <!-- 2. ปุ่ม Fav -->
+                        <button id="fav-btn" data-tmdb-id="{{ movie_tmdb.tmdb_id }}" class="bg-gray-800/80 hover:bg-gray-700 backdrop-blur border border-gray-600 text-white font-medium py-3 px-6 rounded-full transition flex items-center justify-center gap-2 min-w-[120px] h-12 {% if is_favorited %}border-pink-500 bg-pink-900/20 text-pink-400{% endif %}">
                             <span id="fav-icon">
                                 {% if is_favorited %}
                                 <svg class="w-5 h-5 text-pink-500" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M3.172 5.172a4 4 0 015.656 0L10 6.343l1.172-1.171a4 4 0 115.656 5.656L10 17.657l-6.828-6.829a4 4 0 010-5.656z" clip-rule="evenodd"></path></svg>
@@ -68,7 +72,8 @@
                             <span id="fav-text">{% if is_favorited %}Fav แล้ว{% else %}Favorite{% endif %}</span>
                         </button>
 
-                        <button id="bookmark-btn" data-tmdb-id="{{ movie_tmdb.tmdb_id }}" class="bg-gray-800/80 hover:bg-gray-700 backdrop-blur border border-gray-600 text-white font-medium py-3 px-6 rounded-full transition flex items-center justify-center gap-2 min-w-[140px] {% if is_bookmarked %}border-blue-500 bg-blue-900/20 text-blue-400{% endif %}">
+                        <!-- 3. ปุ่ม Bookmark -->
+                        <button id="bookmark-btn" data-tmdb-id="{{ movie_tmdb.tmdb_id }}" class="bg-gray-800/80 hover:bg-gray-700 backdrop-blur border border-gray-600 text-white font-medium py-3 px-6 rounded-full transition flex items-center justify-center gap-2 min-w-[120px] h-12 {% if is_bookmarked %}border-blue-500 bg-blue-900/20 text-blue-400{% endif %}">
                              <span id="bookmark-icon">
                                 {% if is_bookmarked %}
                                 <svg class="w-5 h-5 text-blue-500" fill="currentColor" viewBox="0 0 20 20"><path d="M5 4a2 2 0 012-2h6a2 2 0 012 2v14l-5-2.5L5 18V4z"></path></svg>
@@ -76,8 +81,51 @@
                                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z"></path></svg>
                                 {% endif %}
                              </span>
-                             <span id="bookmark-text">{% if is_bookmarked %}บันทึกแล้ว{% else %}ดูภายหลัง{% endif %}</span>
+                             <span id="bookmark-text">{% if is_bookmarked %}Saved{% else %}Save{% endif %}</span>
                         </button>
+
+                        <!-- 4. ปุ่ม List (Dropdown) -->
+                        <div class="relative group h-12">
+                            <button class="h-full bg-gray-800/80 hover:bg-purple-900/40 hover:border-purple-500 backdrop-blur border border-gray-600 text-white font-medium py-3 px-6 rounded-full transition flex items-center justify-center gap-2 min-w-[120px]">
+                                <svg class="w-5 h-5 text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 10h16M4 14h16M4 18h16"></path></svg>
+                                <span>List</span>
+                                <svg class="w-3 h-3 ml-1 opacity-50 group-hover:rotate-180 transition-transform duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+                            </button>
+                            
+                            <!-- Dropdown Content -->
+                            <div class="absolute top-full left-0 mt-2 w-64 bg-gray-800 rounded-xl shadow-2xl border border-gray-700 overflow-hidden z-50 hidden group-hover:block animate-fade-in-up">
+                                <div class="px-4 py-3 border-b border-gray-700 bg-gray-900/50">
+                                    <span class="text-xs font-bold text-gray-400 uppercase tracking-wider">Add to List</span>
+                                </div>
+                                
+                                <div class="max-h-48 overflow-y-auto scrollbar-hide py-1">
+                                    {% if user_lists %}
+                                        {% for list in user_lists %}
+                                        <button onclick="toggleList('{{ list.id }}', '{{ movie_tmdb.tmdb_id }}', this)" 
+                                                class="w-full text-left px-4 py-2.5 text-sm hover:bg-purple-900/20 hover:text-white flex justify-between items-center transition group/item
+                                                       {% if list.has_movie %}text-yellow-500 font-bold{% else %}text-gray-300{% endif %}">
+                                            <span class="truncate pr-2">{{ list.name }}</span>
+                                            <!-- ส่วนไอคอนสถานะ (เปลี่ยนเป็น SVG) -->
+                                            <span class="status-icon transform scale-0 group-hover/item:scale-100 transition-transform duration-200 {% if list.has_movie %}scale-100{% endif %}">
+                                                {% if list.has_movie %}
+                                                    <svg class="w-4 h-4 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+                                                {% else %}
+                                                    <svg class="w-4 h-4 text-gray-500 group-hover/item:text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
+                                                {% endif %}
+                                            </span>
+                                        </button>
+                                        {% endfor %}
+                                    {% else %}
+                                        <div class="px-4 py-3 text-sm text-gray-500 text-center italic">ยังไม่มีรายการ</div>
+                                    {% endif %}
+                                </div>
+                                
+                                <a href="{% url 'create_list' %}" class="block w-full text-center px-4 py-3 text-sm text-purple-400 hover:text-purple-300 hover:bg-gray-700 border-t border-gray-700 font-medium transition">
+                                    + สร้างรายการใหม่
+                                </a>
+                            </div>
+                        </div>
+
                     {% else %}
                         <a href="{% url 'login' %}?next={{ request.path }}" class="bg-gray-800 hover:bg-gray-700 text-gray-300 font-medium py-3 px-6 rounded-full border border-gray-600 transition">
                             เข้าสู่ระบบเพื่อบันทึกรายการ
@@ -89,7 +137,7 @@
     </div>
 </div>
 
-<!-- Reviews Section (Clean Feed Design) -->
+<!-- Reviews Section -->
 <div class="max-w-5xl mx-auto px-4 pb-20">
     <div class="mb-10 flex items-center justify-between border-b border-gray-800 pb-4">
         <h2 class="text-2xl font-bold text-white flex items-center">
@@ -102,10 +150,8 @@
     {% if reviews %}
         <div class="space-y-6">
             {% for review in reviews %}
-            <!-- Review Item (Clean Style) -->
+            <!-- Review Item -->
             <div class="flex gap-4 md:gap-6 animate-fade-in-up">
-                
-                <!-- Avatar -->
                 <div class="flex-shrink-0">
                     <div class="w-12 h-12 rounded-full overflow-hidden bg-gray-700 border border-gray-600">
                         {% if review.user.profile.avatar %}
@@ -117,43 +163,29 @@
                         {% endif %}
                     </div>
                 </div>
-
-                <!-- Review Content -->
                 <div class="flex-1 min-w-0 pb-6 border-b border-gray-800 last:border-0">
                     <div class="flex justify-between items-start mb-2">
                         <div>
                             <span class="font-bold text-white text-lg hover:text-yellow-400 cursor-pointer transition">{{ review.user.username }}</span>
                             <span class="text-gray-500 text-sm ml-2">{{ review.created_at|date:"d M Y" }}</span>
                         </div>
-                        
-                        <!-- Actions (Edit/Delete) -->
                         {% if request.user == review.user %}
                         <div class="flex items-center gap-3 text-sm">
-                            <a href="{% url 'edit_review' review.id %}" class="text-gray-500 hover:text-blue-400 transition">แก้ไข</a>
-                            <a href="{% url 'delete_review' review.id %}" onclick="return confirm('ลบรีวิวนี้?')" class="text-gray-500 hover:text-red-400 transition">ลบ</a>
+                            <a href="{% url 'edit_review' review.id %}" class="text-gray-500 hover:text-blue-400 transition flex items-center"><svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"/></svg>แก้ไข</a>
+                            <a href="{% url 'delete_review' review.id %}" onclick="return confirm('ลบรีวิวนี้?')" class="text-gray-500 hover:text-red-400 transition flex items-center"><svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>ลบ</a>
                         </div>
                         {% endif %}
                     </div>
-
-                    <!-- Mood & Rating Badges -->
                     <div class="flex items-center gap-3 mb-3">
                         {% if review.rating %}
                         <div class="flex items-center text-yellow-500 bg-yellow-500/10 px-2 py-0.5 rounded text-sm font-bold">
-                            <svg class="w-3.5 h-3.5 mr-1" fill="currentColor" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/></svg>
-                            {{ review.rating }}
+                            <svg class="w-3.5 h-3.5 mr-1" fill="currentColor" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/></svg>{{ review.rating }}
                         </div>
                         {% endif %}
-
                         {% if review.primary_mood %}
-                        <span class="flex items-center text-blue-300 bg-blue-500/10 px-3 py-0.5 rounded-full text-xs border border-blue-500/20">
-                            <!-- ใช้ Icon SVG ง่ายๆ แทน Emoji หน้าคน -->
-                            <svg class="w-3 h-3 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z"></path></svg>
-                            {{ review.primary_mood.name }}
-                        </span>
+                        <span class="flex items-center text-blue-300 bg-blue-500/10 px-3 py-0.5 rounded-full text-xs border border-blue-500/20">{{ review.primary_mood.name }}</span>
                         {% endif %}
                     </div>
-
-                    <!-- Review Text -->
                     {% if review.review_text %}
                         <p class="text-gray-300 leading-relaxed font-light text-base">{{ review.review_text }}</p>
                     {% endif %}
@@ -162,21 +194,18 @@
             {% endfor %}
         </div>
     {% else %}
-        <!-- Empty State (Clean) -->
         <div class="py-16 text-center">
             <div class="w-16 h-16 bg-gray-800 rounded-full flex items-center justify-center mx-auto mb-4 text-gray-600">
                 <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"></path></svg>
             </div>
             <h3 class="text-xl font-bold text-gray-300 mb-2">ยังไม่มีใครรีวิวเรื่องนี้</h3>
             <p class="text-gray-500 mb-6">เป็นคนแรกที่แบ่งปันความรู้สึกของคุณกับเรา</p>
-            <a href="{% url 'add_review' movie_tmdb.tmdb_id %}" class="inline-flex items-center px-6 py-2.5 bg-yellow-500 hover:bg-yellow-400 text-gray-900 font-bold rounded-full transition shadow-lg hover:shadow-yellow-500/20">
-                เขียนรีวิวคนแรก
-            </a>
+            <a href="{% url 'add_review' movie_tmdb.tmdb_id %}" class="inline-flex items-center px-6 py-2.5 bg-yellow-500 hover:bg-yellow-400 text-gray-900 font-bold rounded-full transition shadow-lg hover:shadow-yellow-500/20">เขียนรีวิวคนแรก</a>
         </div>
     {% endif %}
 </div>
 
-<!-- Scripts for Dynamic Icons -->
+<!-- JavaScript for Ajax -->
 <script>
 document.addEventListener('DOMContentLoaded', function() {
     const favBtn = document.getElementById('fav-btn');
@@ -212,13 +241,14 @@ document.addEventListener('DOMContentLoaded', function() {
             const data = await response.json();
             
             // Reset base classes (keep layout classes)
-            btn.className = `transition flex items-center justify-center gap-2 min-w-[140px] font-medium py-3 px-6 rounded-full ${inactiveClasses}`;
-
+            btn.classList.remove('border-pink-500', 'bg-pink-900/20', 'text-pink-400', 'border-blue-500', 'bg-blue-900/20', 'text-blue-400', 'bg-gray-800/80', 'hover:bg-gray-700', 'border-gray-600', 'text-white');
+            
             if (data.status === 'added') {
-                btn.className = `transition flex items-center justify-center gap-2 min-w-[140px] font-medium py-3 px-6 rounded-full ${activeClasses}`;
+                activeClasses.split(' ').forEach(cls => btn.classList.add(cls));
                 iconContainer.innerHTML = icons[type].active;
                 textSpan.textContent = textActive;
             } else {
+                inactiveClasses.split(' ').forEach(cls => btn.classList.add(cls));
                 iconContainer.innerHTML = icons[type].inactive;
                 textSpan.textContent = textInactive;
             }
@@ -239,8 +269,8 @@ document.addEventListener('DOMContentLoaded', function() {
                 document.getElementById('fav-text'),
                 'fav', 
                 'Fav แล้ว', 'Favorite',
-                'border border-pink-500 bg-pink-900/20 text-pink-400 backdrop-blur', // Active
-                'bg-gray-800/80 hover:bg-gray-700 backdrop-blur border border-gray-600 text-white' // Inactive
+                'border-pink-500 bg-pink-900/20 text-pink-400 backdrop-blur border', 
+                'bg-gray-800/80 hover:bg-gray-700 backdrop-blur border-gray-600 text-white border'
             );
         });
     }
@@ -253,13 +283,46 @@ document.addEventListener('DOMContentLoaded', function() {
                 document.getElementById('bookmark-icon'), 
                 document.getElementById('bookmark-text'),
                 'bookmark', 
-                'บันทึกแล้ว', 'ดูภายหลัง',
-                'border border-blue-500 bg-blue-900/20 text-blue-400 backdrop-blur', // Active
-                'bg-gray-800/80 hover:bg-gray-700 backdrop-blur border border-gray-600 text-white' // Inactive
+                'Saved', 'Save',
+                'border-blue-500 bg-blue-900/20 text-blue-400 backdrop-blur border',
+                'bg-gray-800/80 hover:bg-gray-700 backdrop-blur border-gray-600 text-white border'
             );
         });
     }
 });
+
+// ฟังก์ชัน Toggle List (ใหม่)
+async function toggleList(listId, tmdbId, btn) {
+    try {
+        const response = await fetch(`/movies/lists/${listId}/toggle/${tmdbId}/`, {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': '{{ csrf_token }}',
+                'Content-Type': 'application/json'
+            }
+        });
+        
+        const data = await response.json();
+        const iconSpan = btn.querySelector('.status-icon');
+        
+        if (data.status === 'added') {
+            btn.classList.add('text-yellow-500', 'font-bold');
+            btn.classList.remove('text-gray-300');
+            // SVG Checkmark
+            iconSpan.innerHTML = '<svg class="w-4 h-4 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>';
+            iconSpan.classList.add('scale-100');
+        } else if (data.status === 'removed') {
+            btn.classList.remove('text-yellow-500', 'font-bold');
+            btn.classList.add('text-gray-300');
+            // SVG Plus (จางๆ)
+            iconSpan.innerHTML = '<svg class="w-4 h-4 text-gray-500 group-hover/item:text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>';
+            iconSpan.classList.remove('scale-100');
+        }
+    } catch (error) {
+        console.error('Error:', error);
+        alert('เกิดข้อผิดพลาด กรุณาลองใหม่');
+    }
+}
 </script>
 
 {% endblock %}

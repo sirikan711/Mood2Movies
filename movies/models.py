@@ -12,6 +12,7 @@ class Movie(models.Model):
     poster_path = models.CharField(max_length=255, null=True, blank=True)
     overview = models.TextField(null=True, blank=True)
     release_date = models.DateField(null=True, blank=True)
+    vote_average = models.FloatField(default=0.0)
 
     def __str__(self):
         return self.title

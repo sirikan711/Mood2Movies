@@ -3,7 +3,7 @@ from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
 from django.contrib.admin.views.decorators import staff_member_required
 from django.contrib import messages
-from django.db.models import Count, Avg, Q, F  # <--- เพิ่ม F เข้ามาตรงนี้
+from django.db.models import Count, Avg, Q, F, FloatField, ExpressionWrapper
 from django.http import JsonResponse
 from django.views.decorators.http import require_POST
 from django.contrib.auth.models import User
@@ -112,18 +112,39 @@ def movie_detail(request, tmdb_id):
     return render(request, 'movies/detail.html', context)
 
 def mood_recommendation(request, mood_id):
-    """แนะนำหนังตามอารมณ์"""
+    """แนะนำหนังตามอารมณ์ ด้วยสูตร Weighted Rating (IMDb Formula)"""
     mood = get_object_or_404(Mood, id=mood_id)
     
-    # สูตรคำนวณ Mood Score
+    # ---------------------------------------------------------
+    # 1. กำหนดตัวแปรสำหรับสูตร IMDb
+    # ---------------------------------------------------------
+    m = 1  # (m) Minimum Votes: จำนวนรีวิวขั้นต่ำที่จะนำมาคำนวณ (ปรับเลขได้)
+    
+    # (C) Global Average: ค่าเฉลี่ยความเข้มข้นอารมณ์นี้ ของหนัง 'ทุกเรื่อง' ในระบบ
+    # ถ้ายังไม่มีรีวิวเลย ให้ตั้งค่า default เป็น 5.0 (กลางๆ)
+    global_stats = Review.objects.filter(primary_mood=mood).aggregate(avg_global=Avg('mood_intensity'))
+    C = global_stats['avg_global'] if global_stats['avg_global'] is not None else 5.0
+
+    # ---------------------------------------------------------
+    # 2. Query และคำนวณ Weighted Score
+    # ---------------------------------------------------------
     recommended_movies = Movie.objects.filter(
         reviews__primary_mood=mood
     ).annotate(
-        mood_count=Count('reviews', filter=Q(reviews__primary_mood=mood)),
-        avg_intensity=Avg('reviews__mood_intensity', filter=Q(reviews__primary_mood=mood))
+        # (v) Count: จำนวนรีวิวของหนังเรื่องนี้
+        v=Count('reviews', filter=Q(reviews__primary_mood=mood)),
+        # (R) Average: ค่าเฉลี่ยความเข้มข้นของหนังเรื่องนี้
+        R=Avg('reviews__mood_intensity', filter=Q(reviews__primary_mood=mood))
+    ).filter(
+        # กรองเอาเฉพาะเรื่องที่มีรีวิวเกินค่า m (เช่น ต้องมี 5 คนขึ้นไปถึงจะติดอันดับ)
+        v__gte=m  
     ).annotate(
-        # ใช้ F() ตรงๆ แทน models.F()
-        mood_score=F('mood_count') * F('avg_intensity')
+        # สูตร IMDb: WR = (v / (v+m)) * R + (m / (v+m)) * C
+        # แปลงเป็นคณิตศาสตร์ใน Django ORM (ExpressionWrapper เพื่อให้ผลลัพธ์เป็นทศนิยม)
+        mood_score=ExpressionWrapper(
+            ((F('v') * F('R')) + (m * C)) / (F('v') + m),
+            output_field=FloatField()
+        )
     ).order_by('-mood_score')[:20]
 
     return render(request, 'movies/recommendation.html', {
@@ -147,7 +168,8 @@ def add_review(request, tmdb_id):
                 title=tmdb_data['title'],
                 poster_path=tmdb_data['poster_path'],
                 overview=tmdb_data.get('overview', ''),
-                release_date=tmdb_data.get('release_date')
+                release_date=tmdb_data.get('release_date'),
+                vote_average=tmdb_data.get('vote_average', 0.0)
             )
         else:
             messages.error(request, 'ไม่พบข้อมูลภาพยนตร์')

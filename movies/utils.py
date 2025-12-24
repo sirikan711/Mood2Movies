@@ -50,7 +50,7 @@ def search_movies_tmdb(query, year=None, genre_id=None):
                         'title': item['title'],
                         'release_date': item.get('release_date', 'N/A'),
                         'poster_url': f"{TMDB_IMAGE_BASE_URL}{item['poster_path']}",
-                        'vote_average': item.get('vote_average')
+                        'vote_average': item.get('vote_average', 0.0) 
                     })
         except Exception as e:
             print(f"Error searching: {e}")
@@ -82,7 +82,7 @@ def search_movies_tmdb(query, year=None, genre_id=None):
                         'title': item['title'],
                         'release_date': item.get('release_date', 'N/A'),
                         'poster_url': f"{TMDB_IMAGE_BASE_URL}{item['poster_path']}",
-                        'vote_average': item.get('vote_average')
+                        'vote_average': item.get('vote_average', 0.0)
                     })
         except Exception as e:
             print(f"Error discovering: {e}")
@@ -106,7 +106,7 @@ def get_movie_details_tmdb(tmdb_id):
             'release_date': data.get('release_date'),
             'genres': [g['name'] for g in data.get('genres', [])],
             'runtime': data.get('runtime'),
-            'vote_average': data.get('vote_average')
+            'vote_average': data.get('vote_average', 0.0)
         }
     except Exception as e:
         return None
@@ -127,7 +127,7 @@ def get_popular_movies_tmdb():
                     'title': item['title'],
                     'release_date': item.get('release_date', 'N/A'),
                     'poster_url': f"{TMDB_IMAGE_BASE_URL}{item['poster_path']}",
-                    'vote_average': item.get('vote_average')
+                    'vote_average': item.get('vote_average', 0.0)
                 })
         return results
     except Exception as e:

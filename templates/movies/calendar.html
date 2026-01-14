@@ -1,0 +1,117 @@
+{% extends 'base.html' %}
+{% load custom_filters %}
+
+{% block content %}
+<div class="max-w-7xl mx-auto px-4 py-8">
+    
+    <div class="flex flex-col md:flex-row justify-between items-center mb-8 bg-gray-800/80 backdrop-blur p-6 rounded-2xl shadow-xl border border-gray-700/50">
+        <div class="flex items-center gap-3 mb-4 md:mb-0">
+            <div class="bg-yellow-500/10 p-3 rounded-xl border border-yellow-500/20">
+                <svg class="w-8 h-8 text-yellow-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
+            </div>
+            <div>
+                <h1 class="text-2xl font-bold text-white">โปรแกรมหนังเข้าใหม่</h1>
+                <p class="text-gray-400 text-sm">วางแผนการดูหนังของคุณในเดือนนี้</p>
+            </div>
+        </div>
+        
+        <div class="flex items-center gap-6 bg-gray-900/50 px-6 py-2 rounded-full border border-gray-700">
+            <a href="?year={{ prev_year }}&month={{ prev_month }}" class="text-gray-400 hover:text-white hover:bg-gray-700 p-2 rounded-full transition transform hover:scale-110">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path></svg>
+            </a>
+            <span class="text-xl font-bold text-yellow-500 w-48 text-center select-none uppercase tracking-wider">
+                {{ month_name }} {{ year }}
+            </span>
+            <a href="?year={{ next_year }}&month={{ next_month }}" class="text-gray-400 hover:text-white hover:bg-gray-700 p-2 rounded-full transition transform hover:scale-110">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
+            </a>
+        </div>
+    </div>
+
+    <div class="bg-gray-800/50 rounded-2xl overflow-hidden shadow-2xl border border-gray-700 backdrop-blur-sm">
+        <div class="grid grid-cols-7 bg-gray-900/80 text-center py-4 border-b border-gray-700">
+            <div class="text-gray-400 font-semibold text-sm uppercase tracking-widest">Mon</div>
+            <div class="text-gray-400 font-semibold text-sm uppercase tracking-widest">Tue</div>
+            <div class="text-gray-400 font-semibold text-sm uppercase tracking-widest">Wed</div>
+            <div class="text-yellow-500/80 font-semibold text-sm uppercase tracking-widest">Thu</div> <div class="text-gray-400 font-semibold text-sm uppercase tracking-widest">Fri</div>
+            <div class="text-red-400/80 font-semibold text-sm uppercase tracking-widest">Sat</div>
+            <div class="text-red-400/80 font-semibold text-sm uppercase tracking-widest">Sun</div>
+        </div>
+
+        <div class="grid grid-cols-7 bg-gray-800 border-l border-t border-gray-700">
+            {% for week in calendar %}
+                {% for day in week %}
+                    <div class="min-h-[160px] border-r border-b border-gray-700/50 relative group transition-colors hover:bg-gray-700/30 flex flex-col">
+                        {% if day != 0 %}
+                            <div class="flex justify-between items-start p-2">
+                                <span class="inline-flex items-center justify-center w-8 h-8 rounded-full text-sm font-bold 
+                                    {% if day == current_day and year == current_year and month == current_month %}
+                                        bg-yellow-500 text-gray-900 shadow-lg shadow-yellow-500/20
+                                    {% else %}
+                                        text-gray-500 group-hover:text-gray-200
+                                    {% endif %}">
+                                    {{ day }}
+                                </span>
+                            </div>
+
+                            {% with d=day|pad_zero m=month|pad_zero %}
+                            {% with date_str=year|stringformat:"d"|add:"-"|add:m|add:"-"|add:d %}
+                                
+                                {% if date_str in movies_by_date %}
+                                    <div class="px-2 pb-2 space-y-2 overflow-y-auto max-h-[120px] scrollbar-hide">
+                                        {% for movie in movies_by_date|get_item:date_str %}
+                                            <a href="{% url 'movie_detail' movie.tmdb_id %}" 
+                                               class="flex items-center gap-2 bg-gray-900/80 hover:bg-gray-700 rounded-lg p-1.5 border border-gray-700/50 hover:border-yellow-500/50 transition group/card shadow-sm">
+                                                
+                                                <div class="flex-shrink-0 w-8 h-12 bg-gray-800 rounded overflow-hidden">
+                                                    {% if movie.poster_url %}
+                                                        <img src="{{ movie.poster_url }}" class="w-full h-full object-cover transform group-hover/card:scale-110 transition duration-300">
+                                                    {% else %}
+                                                        <div class="w-full h-full flex items-center justify-center text-xs text-gray-600">No img</div>
+                                                    {% endif %}
+                                                </div>
+
+                                                <div class="min-w-0">
+                                                    <p class="text-xs text-gray-200 font-medium truncate group-hover/card:text-yellow-400 transition">
+                                                        {{ movie.title }}
+                                                    </p>
+                                                    <p class="text-[10px] text-gray-500 truncate">
+                                                        {{ movie.release_date|date:"d M" }}
+                                                    </p>
+                                                </div>
+                                            </a>
+                                        {% endfor %}
+                                    </div>
+                                {% endif %}
+                                
+                            {% endwith %}
+                            {% endwith %}
+
+                        {% else %}
+                            <div class="h-full w-full bg-gray-900/40 pattern-dots"></div>
+                        {% endif %}
+                    </div>
+                {% endfor %}
+            {% endfor %}
+        </div>
+    </div>
+    
+    <div class="mt-6 flex flex-col md:flex-row justify-between items-center text-xs text-gray-500 space-y-2 md:space-y-0">
+        <div class="flex items-center gap-2">
+            <span class="w-3 h-3 rounded-full bg-yellow-500 inline-block"></span>
+            <span>วันนี้</span>
+        </div>
+        <div>
+            * ข้อมูลวันฉายอ้างอิงจาก TMDb (Region: TH) อาจมีการเปลี่ยนแปลง
+        </div>
+    </div>
+</div>
+
+<style>
+    /* CSS เพิ่มเติมสำหรับลายจุดในช่องว่าง */
+    .pattern-dots {
+        background-image: radial-gradient(#374151 1px, transparent 1px);
+        background-size: 8px 8px;
+    }
+</style>
+{% endblock %}

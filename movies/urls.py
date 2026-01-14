@@ -34,4 +34,7 @@ urlpatterns = [
     path('lists/<int:list_id>/remove/<int:movie_id>/', views.remove_movie_from_list, name='remove_movie_from_list'),
     # AJAX Toggle
     path('lists/<int:list_id>/toggle/<int:tmdb_id>/', views.toggle_list_movie, name='toggle_list_movie'),
+
+    # --- 6. ปฏิทินภาพยนตร์ ---
+    path('calendar/', views.movie_calendar, name='movie_calendar'),
 ]

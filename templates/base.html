@@ -5,9 +5,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{% block title %}Mood2Movie{% endblock %}</title>
-    <!-- Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
-    <!-- Google Fonts -->
     <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;500;700&display=swap" rel="stylesheet">
     <style>
         body { font-family: 'Prompt', sans-serif; }
@@ -39,27 +37,28 @@
 </head>
 <body class="bg-gray-900 text-gray-100 min-h-screen flex flex-col">
 
-    <!-- Navbar -->
     <nav class="bg-gray-800 border-b border-gray-700 shadow-lg sticky top-0 z-50">
         <div class="w-full max-w-screen-2xl mx-auto px-4 md:px-8">
             <div class="flex justify-between items-center h-16">
                 
-                <!-- โลโก้ -->
                 <a href="{% url 'home' %}" class="flex items-center space-x-2 group">
                     <span class="text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-yellow-400 to-yellow-600 group-hover:from-yellow-300 group-hover:to-yellow-500 transition">
                         Mood2Movie
                     </span>
                 </a>
-
-                <!-- Desktop Menu -->
+                
                 <div class="hidden md:flex space-x-8 items-center">
                     <a href="{% url 'home' %}" class="hover:text-yellow-400 transition font-medium">หน้าแรก</a>
                     <a href="{% url 'search_movies' %}" class="hover:text-yellow-400 transition font-medium">ค้นหาหนัง</a>
                     
+                    <a href="{% url 'movie_calendar' %}" class="hover:text-yellow-400 transition font-medium flex items-center">
+                        <svg class="w-5 h-5 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
+                        ปฏิทินหนัง
+                    </a>
+                    
                     {% if user.is_authenticated %}
                         <div class="flex items-center space-x-4 ml-4 border-l border-gray-600 pl-4">
                             
-                            <!-- ปุ่ม Admin (แสดงเฉพาะ Superuser) -->
                             {% if user.is_superuser %}
                                 <a href="{% url 'admin_dashboard' %}" class="flex items-center space-x-1 bg-red-900/30 hover:bg-red-900/50 text-red-400 hover:text-red-300 px-3 py-1.5 rounded-lg border border-red-500/30 transition mr-2" title="จัดการระบบ">
                                     <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -70,7 +69,6 @@
                                 </a>
                             {% endif %}
 
-                            <!-- เมนู My Lists -->
                             <a href="{% url 'my_lists' %}" class="flex items-center space-x-1 text-gray-300 hover:text-yellow-400 transition" title="รายการของฉัน">
                                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path></svg>
                                 <span class="font-medium hidden lg:inline">My Lists</span>
@@ -103,7 +101,6 @@
                     {% endif %}
                 </div>
 
-                <!-- Mobile Menu Button -->
                 <button id="mobile-menu-btn" class="md:hidden text-gray-300 hover:text-white focus:outline-none">
                     <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path>
@@ -112,15 +109,18 @@
             </div>
         </div>
 
-        <!-- Mobile Menu Dropdown -->
         <div id="mobile-menu" class="hidden md:hidden bg-gray-700 border-t border-gray-600">
             <div class="flex flex-col p-4 space-y-3">
                 <a href="{% url 'home' %}" class="block py-2 hover:text-yellow-400 border-b border-gray-600">หน้าแรก</a>
                 <a href="{% url 'search_movies' %}" class="block py-2 hover:text-yellow-400 border-b border-gray-600">ค้นหาหนัง</a>
                 
+                <a href="{% url 'movie_calendar' %}" class="block py-2 hover:text-yellow-400 border-b border-gray-600 flex items-center">
+                    <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
+                    <span class="mr-2">ปฏิทินหนัง</span>
+                </a>
+                
                 {% if user.is_authenticated %}
                     
-                    <!-- Admin Mobile -->
                     {% if user.is_superuser %}
                         <a href="{% url 'admin_dashboard' %}" class="block py-2 text-red-400 hover:text-red-300 font-bold flex items-center border-b border-gray-600">
                             <span class="mr-2">จัดการระบบ (Admin)</span>
@@ -148,9 +148,7 @@
         </div>
     </nav>
 
-    <!-- Main Content -->
     <main class="flex-grow w-full max-w-screen-2xl mx-auto p-4 md:p-8">
-        <!-- Messages Area -->
         {% if messages %}
             <div id="message-container" class="mb-6 space-y-2 max-w-4xl mx-auto">
                 {% for message in messages %}
@@ -174,7 +172,6 @@
         {% block content %}{% endblock %}
     </main>
 
-    <!-- Footer -->
     <footer class="bg-gray-800 border-t border-gray-700 mt-auto">
         <div class="w-full max-w-screen-2xl mx-auto p-6 text-center text-gray-400">
             <div class="mb-4 flex justify-center items-center">
@@ -203,7 +200,6 @@
         </div>
     </footer>
 
-    <!-- JavaScript สำหรับ Mobile Menu และ Auto-dismiss Alerts -->
     <script>
         // Toggle Mobile Menu
         const btn = document.getElementById('mobile-menu-btn');

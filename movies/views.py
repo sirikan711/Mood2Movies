@@ -1,4 +1,6 @@
 import datetime
+import calendar
+
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
 from django.contrib.admin.views.decorators import staff_member_required
@@ -7,10 +9,11 @@ from django.db.models import Count, Avg, Q, F, FloatField, ExpressionWrapper
 from django.http import JsonResponse
 from django.views.decorators.http import require_POST
 from django.contrib.auth.models import User
+from datetime import date, timedelta
 
 from .models import Movie, Review, Mood, Favorite, Bookmark, CustomList
 from .forms import ReviewForm, CustomListForm
-from .utils import search_movies_tmdb, get_movie_details_tmdb, get_tmdb_genres
+from .utils import search_movies_tmdb, get_movie_details_tmdb, get_tmdb_genres, get_movies_in_date_range
 
 # ==========================================
 # 1. PUBLIC VIEWS (ค้นหา, รายละเอียด, แนะนำ)
@@ -481,3 +484,58 @@ def admin_delete_review(request, review_id):
     review.delete()
     messages.success(request, 'ลบรีวิวเรียบร้อยแล้ว')
     return redirect('admin_reviews')
+
+def movie_calendar(request):
+    """แสดงปฏิทินหนังเข้าใหม่"""
+    # 1. หาปีและเดือนปัจจุบัน (หรือจาก URL)
+    today = date.today()
+    try:
+        year = int(request.GET.get('year', today.year))
+        month = int(request.GET.get('month', today.month))
+    except ValueError:
+        year = today.year
+        month = today.month
+
+    # 2. หาวันแรกและวันสุดท้ายของเดือน เพื่อส่งไปดึงข้อมูล API
+    _, last_day = calendar.monthrange(year, month)
+    start_date = f"{year}-{month:02d}-01"
+    end_date = f"{year}-{month:02d}-{last_day}"
+
+    # 3. ดึงหนังจาก TMDb
+    movies = get_movies_in_date_range(start_date, end_date)
+
+    # 4. จัดกลุ่มหนังตาม "วันที่" เพื่อให้ง่ายต่อการแสดงผลใน Template
+    # ผลลัพธ์: {'2023-11-01': [movie1, movie2], '2023-11-15': [movie3]}
+    movies_by_date = {}
+    for movie in movies:
+        r_date = movie['release_date']
+        if r_date not in movies_by_date:
+            movies_by_date[r_date] = []
+        movies_by_date[r_date].append(movie)
+
+    # 5. สร้าง Matrix ปฏิทิน (List of Lists ของวันที่)
+    # 0 คือวันที่ไม่ใช่ของเดือนนี้ (ช่องว่าง)
+    cal = calendar.monthcalendar(year, month)
+
+    # 6. คำนวณเดือนก่อนหน้าและเดือนถัดไป (สำหรับปุ่มเปลี่ยนเดือน)
+    prev_date = date(year, month, 1) - timedelta(days=1)
+    next_date = date(year, month, last_day) + timedelta(days=1)
+
+    # ชื่อเดือนภาษาไทย
+    thai_months = [
+        "", "มกราคม", "กุมภาพันธ์", "มีนาคม", "เมษายน", "พฤษภาคม", "มิถุนายน",
+        "กรกฎาคม", "สิงหาคม", "กันยายน", "ตุลาคม", "พฤศจิกายน", "ธันวาคม"
+    ]
+
+    context = {
+        'calendar': cal,
+        'movies_by_date': movies_by_date,
+        'year': year,
+        'month': month,
+        'month_name': thai_months[month],
+        'prev_year': prev_date.year,
+        'prev_month': prev_date.month,
+        'next_year': next_date.year,
+        'next_month': next_date.month,
+    }
+    return render(request, 'movies/calendar.html', context)

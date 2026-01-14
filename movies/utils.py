@@ -133,3 +133,36 @@ def get_popular_movies_tmdb():
     except Exception as e:
         print(f"Error fetching popular movies from TMDb: {e}")
         return []
+    
+def get_movies_in_date_range(start_date, end_date):
+    """ดึงหนังที่ฉายในช่วงวันที่กำหนด (สำหรับปฏิทิน)"""
+    url = f"{TMDB_BASE_URL}/discover/movie"
+    params = {
+        'api_key': TMDB_API_KEY,
+        'language': 'th-TH',
+        'region': 'TH', # เน้นหนังที่เข้าไทย
+        'sort_by': 'primary_release_date.asc',
+        'primary_release_date.gte': start_date,
+        'primary_release_date.lte': end_date,
+        'with_release_type': '2|3', # 2=Limited, 3=Theatrical (เข้าโรง)
+    }
+    
+    try:
+        response = requests.get(url, params=params)
+        response.raise_for_status()
+        data = response.json()
+        
+        results = []
+        for item in data.get('results', []):
+            if item.get('release_date'):
+                results.append({
+                    'tmdb_id': item['id'],
+                    'title': item['title'],
+                    'release_date': item['release_date'], # Format: YYYY-MM-DD
+                    'poster_url': f"{TMDB_IMAGE_BASE_URL}{item['poster_path']}" if item.get('poster_path') else None,
+                    'overview': item.get('overview', '')
+                })
+        return results
+    except Exception as e:
+        print(f"Error fetching calendar movies: {e}")
+        return []

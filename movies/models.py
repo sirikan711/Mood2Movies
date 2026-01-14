@@ -44,7 +44,7 @@ class Review(models.Model):
     movie = models.ForeignKey(Movie, on_delete=models.CASCADE, related_name='reviews')
     primary_mood = models.ForeignKey(Mood, on_delete=models.SET_NULL, null=True, related_name='primary_reviews')
     mood_intensity = models.IntegerField(validators=[MinValueValidator(1), MaxValueValidator(5)])
-    rating = models.FloatField(validators=[MinValueValidator(0), MaxValueValidator(10)])
+    # rating = models.FloatField(validators=[MinValueValidator(0), MaxValueValidator(10)])
     review_text = models.TextField(blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
 

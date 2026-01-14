@@ -32,8 +32,8 @@ class MovieAdmin(admin.ModelAdmin):
 
 @admin.register(Review)
 class ReviewAdmin(admin.ModelAdmin):
-    list_display = ('user', 'movie', 'primary_mood', 'mood_intensity', 'rating', 'created_at')
-    list_filter = ('primary_mood', 'mood_intensity', 'rating', 'created_at') 
+    list_display = ('user', 'movie', 'primary_mood', 'mood_intensity', 'created_at')
+    list_filter = ('primary_mood', 'mood_intensity', 'created_at') 
     search_fields = ('user__username', 'movie__title', 'review_text')
     date_hierarchy = 'created_at'
 

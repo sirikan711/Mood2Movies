@@ -37,14 +37,8 @@ class ReviewForm(forms.ModelForm):
         })
     )
     
-    rating = forms.FloatField(
-        min_value=0, max_value=10,
-        widget=forms.NumberInput(attrs={
-            'class': 'w-full p-3 rounded bg-gray-700 text-white border border-gray-600 focus:border-yellow-500', 
-            'placeholder': '0.0 - 10.0'
-        })
-    )
-    
+    # --- ลบส่วน rating = ... ออกไปแล้ว ---
+
     review_text = forms.CharField(
         widget=forms.Textarea(attrs={
             'rows': 4, 
@@ -56,7 +50,8 @@ class ReviewForm(forms.ModelForm):
 
     class Meta:
         model = Review
-        fields = ['primary_mood', 'mood_intensity', 'rating', 'review_text']
+        # ลบ 'rating' ออกจากลิสต์นี้ด้วย
+        fields = ['primary_mood', 'mood_intensity', 'review_text']
 
 class CustomListForm(forms.ModelForm):
     class Meta:

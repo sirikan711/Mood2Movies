@@ -27,14 +27,25 @@ urlpatterns = [
 
     # --- 5. Custom Lists ---
     path('lists/', views.my_lists, name='my_lists'),
-    path('lists/create/', views.create_list, name='create_list'),
-    path('lists/<int:list_id>/', views.list_detail, name='list_detail'),
+    
+    # 5.1 Actions (create, edit, delete, remove) ต้องมาก่อน
+    path('lists/create/', views.create_list, name='create_list'), 
     path('lists/edit/<int:list_id>/', views.edit_list, name='edit_list'),
     path('lists/delete/<int:list_id>/', views.delete_list, name='delete_list'),
+    
+    # *** ผมเติม 2 บรรทัดนี้กลับมาให้ เพราะหน้า list_detail.html เรียกใช้ครับ ***
     path('lists/<int:list_id>/remove/<int:movie_id>/', views.remove_movie_from_list, name='remove_movie_from_list'),
-    # AJAX Toggle
     path('lists/<int:list_id>/toggle/<int:tmdb_id>/', views.toggle_list_movie, name='toggle_list_movie'),
+
+    # 5.2 Detail ID (ที่เป็นตัวเลข) ต้องมาก่อน Username *** จุดที่แก้คือตรงนี้ครับ ***
+    path('lists/<int:list_id>/', views.list_detail, name='list_detail'), # <--- เอาบรรทัดนี้ขึ้นก่อน
+
+    # 5.3 Username (ที่เป็นตัวหนังสือ) ไว้ล่างสุด *** ย้ายมาตรงนี้ ***
+    path('lists/<str:username>/', views.user_lists, name='user_lists'), 
 
     # --- 6. ปฏิทินภาพยนตร์ ---
     path('calendar/', views.movie_calendar, name='movie_calendar'),
+
+    # --- 7. ค้นหาผู้ใช้ ---
+    path('search/users/', views.search_users, name='search_users'),
 ]

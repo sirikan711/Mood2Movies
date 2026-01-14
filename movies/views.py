@@ -114,6 +114,22 @@ def movie_detail(request, tmdb_id):
     }
     return render(request, 'movies/detail.html', context)
 
+@login_required
+def search_users(request):
+    """ค้นหาบัญชีผู้ใช้คนอื่นๆ"""
+    query = request.GET.get('q', '').strip()
+    users = []
+    
+    if query:
+        # ค้นหาจาก username, ชื่อ, หรือ นามสกุล (ไม่รวม Superuser และตัวเอง)
+        users = User.objects.filter(
+            Q(username__icontains=query) | 
+            Q(first_name__icontains=query) |
+            Q(last_name__icontains=query)
+        ).exclude(is_superuser=True).exclude(id=request.user.id)
+
+    return render(request, 'movies/search_users.html', {'users': users, 'query': query})
+
 def mood_recommendation(request, mood_id):
     """แนะนำหนังตามอารมณ์ ด้วยสูตร Weighted Rating (IMDb Formula)"""
     mood = get_object_or_404(Mood, id=mood_id)
@@ -462,28 +478,30 @@ def toggle_list_movie(request, list_id, tmdb_id):
 
     return JsonResponse({'status': status, 'list_name': custom_list.name})
 
-# --- Admin Delete Actions ---
+def user_lists(request, username):
+    # ดึงข้อมูล User จากชื่อ
+    profile_user = get_object_or_404(User, username=username)
 
-@staff_member_required(login_url='login')
-def admin_delete_movie(request, movie_id):
-    movie = get_object_or_404(Movie, id=movie_id)
-    movie.delete()
-    messages.success(request, 'ลบภาพยนตร์เรียบร้อยแล้ว')
-    return redirect('admin_movies')
+    # เช็คว่า: คนที่ล็อกอินอยู่ คือคนเดียวกับเจ้าของโปรไฟล์นี้ไหม?
+    if request.user.is_authenticated and request.user == profile_user:
+        # ถ้าใช่ "ตัวเราเอง" -> ดีดไปหน้าจัดการส่วนตัวเลย (my_lists)
+        return redirect('my_lists')
 
-@staff_member_required(login_url='login')
-def admin_delete_mood(request, mood_id):
-    mood = get_object_or_404(Mood, id=mood_id)
-    mood.delete()
-    messages.success(request, 'ลบอารมณ์เรียบร้อยแล้ว')
-    return redirect('admin_moods')
+    # ----------------------------------------------------
+    # ถ้าไม่ใช่ (เป็นคนอื่นมาส่อง) -> ให้ทำงานตามปกติ
+    # ----------------------------------------------------
+    
+    # ดึงเฉพาะรายการที่เป็น Public (is_public=True) ให้คนอื่นดู
+    lists = CustomList.objects.filter(user=profile_user, is_public=True).order_by('-created_at')
 
-@staff_member_required(login_url='login')
-def admin_delete_review(request, review_id):
-    review = get_object_or_404(Review, id=review_id)
-    review.delete()
-    messages.success(request, 'ลบรีวิวเรียบร้อยแล้ว')
-    return redirect('admin_reviews')
+    return render(request, 'movies/lists/user_lists.html', {
+        'profile_user': profile_user,
+        'lists': lists,
+    })
+
+# ==========================================
+# 5. MOVIE CALENDAR
+# ==========================================
 
 def movie_calendar(request):
     """แสดงปฏิทินหนังเข้าใหม่"""
@@ -539,3 +557,28 @@ def movie_calendar(request):
         'next_month': next_date.month,
     }
     return render(request, 'movies/calendar.html', context)
+
+# ==========================================
+# 6. ADMIN DELETE ACTIONS
+# ==========================================
+
+@staff_member_required(login_url='login')
+def admin_delete_movie(request, movie_id):
+    movie = get_object_or_404(Movie, id=movie_id)
+    movie.delete()
+    messages.success(request, 'ลบภาพยนตร์เรียบร้อยแล้ว')
+    return redirect('admin_movies')
+
+@staff_member_required(login_url='login')
+def admin_delete_mood(request, mood_id):
+    mood = get_object_or_404(Mood, id=mood_id)
+    mood.delete()
+    messages.success(request, 'ลบอารมณ์เรียบร้อยแล้ว')
+    return redirect('admin_moods')
+
+@staff_member_required(login_url='login')
+def admin_delete_review(request, review_id):
+    review = get_object_or_404(Review, id=review_id)
+    review.delete()
+    messages.success(request, 'ลบรีวิวเรียบร้อยแล้ว')
+    return redirect('admin_reviews')

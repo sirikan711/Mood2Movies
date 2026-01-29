@@ -135,16 +135,17 @@ def get_popular_movies_tmdb():
         return []
     
 def get_movies_in_date_range(start_date, end_date):
-    """ดึงหนังที่ฉายในช่วงวันที่กำหนด (สำหรับปฏิทิน)"""
+    """ดึงหนังที่ฉายในไทย ช่วงวันที่กำหนด"""
     url = f"{TMDB_BASE_URL}/discover/movie"
     params = {
         'api_key': TMDB_API_KEY,
         'language': 'th-TH',
-        'region': 'TH', # เน้นหนังที่เข้าไทย
-        'sort_by': 'primary_release_date.asc',
-        'primary_release_date.gte': start_date,
-        'primary_release_date.lte': end_date,
-        'with_release_type': '2|3', # 2=Limited, 3=Theatrical (เข้าโรง)
+        'region': 'TH', # 1. ระบุประเทศ
+        'sort_by': 'release_date.asc', # 2. เรียงตามวันฉายในประเทศนั้น
+        'release_date.gte': start_date, # 3. ใช้วันฉาย (ไม่ใช่ primary_release_date)
+        'release_date.lte': end_date,
+        'with_release_type': '2|3', # 2=Limited, 3=Theatrical
+        'include_adult': 'false'
     }
     
     try:
@@ -158,7 +159,7 @@ def get_movies_in_date_range(start_date, end_date):
                 results.append({
                     'tmdb_id': item['id'],
                     'title': item['title'],
-                    'release_date': item['release_date'], # Format: YYYY-MM-DD
+                    'release_date': item['release_date'],
                     'poster_url': f"{TMDB_IMAGE_BASE_URL}{item['poster_path']}" if item.get('poster_path') else None,
                     'overview': item.get('overview', '')
                 })

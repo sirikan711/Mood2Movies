@@ -41,16 +41,14 @@ def search_movies(request):
             movies_qs = movies_qs.filter(release_date__year=year)
             
         for m in movies_qs:
-            # คำนวณ Rating เฉลี่ยจากรีวิวในระบบเรา
-            local_rating = m.reviews.aggregate(Avg('rating'))['rating__avg']
-            
+            # ตัดส่วนคำนวณ Rating ออกแล้ว
             movies.append({
                 'tmdb_id': m.tmdb_id,
                 'title': m.title,
                 'release_date': str(m.release_date) if m.release_date else 'N/A',
                 'poster_url': f"https://image.tmdb.org/t/p/w500{m.poster_path}" if m.poster_path else None,
                 'overview': m.overview,
-                'local_rating': local_rating
+                # ไม่ส่ง local_rating ไปแล้ว
             })
 
     # Case 2: ค้นหาจาก TMDb API (เมื่อไม่มี Mood)

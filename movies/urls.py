@@ -8,7 +8,7 @@ urlpatterns = [
 
     # --- 2. จัดการภาพยนตร์ ---
     path('movie/<int:tmdb_id>/', views.movie_detail, name='movie_detail'),
-    path('movie/<int:tmdb_id>/review/', views.add_review, name='add_review'),
+    path('movie/<int:tmdb_id>/', views.movie_detail, name='movie_detail'),
     path('movie/<int:tmdb_id>/favorite/', views.toggle_favorite, name='toggle_favorite'),
     path('movie/<int:tmdb_id>/bookmark/', views.toggle_bookmark, name='toggle_bookmark'),
 
@@ -24,6 +24,8 @@ urlpatterns = [
     path('custom-admin/moods/delete/<int:mood_id>/', views.admin_delete_mood, name='admin_delete_mood'),
     path('custom-admin/reviews/', views.admin_reviews, name='admin_reviews'),
     path('custom-admin/reviews/delete/<int:review_id>/', views.admin_delete_review, name='admin_delete_review'),
+    path('custom-admin/users/', views.admin_users, name='admin_users'),
+    path('custom-admin/users/delete/<int:user_id>/', views.admin_delete_user, name='admin_delete_user'),
 
     # --- 5. Custom Lists ---
     path('lists/', views.my_lists, name='my_lists'),

@@ -20,7 +20,6 @@ class Movie(models.Model):
 class Mood(models.Model):
     name = models.CharField(max_length=50, unique=True)
 
-    # เพิ่ม Property นี้เพื่อให้ Template เรียกใช้ {{ mood.emoji }} ได้โดยตรง
     @property
     def emoji(self):
         if 'Happy' in self.name: return '😊'
@@ -30,29 +29,37 @@ class Mood(models.Model):
         elif 'Heartwarming' in self.name: return '🥰'
         elif 'Tense' in self.name: return '😬'
         elif 'Funny' in self.name: return '🤣'
-        elif 'Relaxing' in self.name: return '😌'
-        return '🎬'
+        return '😐'
 
     def __str__(self):
-        # เรียกใช้ Property ด้านบน
-        return f"{self.emoji} {self.name}"
-
-# --- 2. User Interaction Models ---
+        return self.name
 
 class Review(models.Model):
-    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='reviews')
     movie = models.ForeignKey(Movie, on_delete=models.CASCADE, related_name='reviews')
-    primary_mood = models.ForeignKey(Mood, on_delete=models.SET_NULL, null=True, related_name='primary_reviews')
-    mood_intensity = models.IntegerField(validators=[MinValueValidator(1), MaxValueValidator(5)])
-    # rating = models.FloatField(validators=[MinValueValidator(0), MaxValueValidator(10)])
-    review_text = models.TextField(blank=True)
+    # [FIXED] เติม related_name='reviews' เพื่อให้ User เรียก user.reviews.all() ได้
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='reviews')
+    comment = models.TextField(blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
+    
+    def __str__(self):
+        return f"Review by {self.user.username} on {self.movie.title}"
+
+class ReviewMoodScore(models.Model):
+    """
+    ตารางนี้เก็บคะแนนความเข้มข้นของแต่ละอารมณ์ ใน 1 รีวิว
+    เช่น รีวิวนี้มี Joy=5, Sad=2, Fear=0
+    """
+    review = models.ForeignKey(Review, on_delete=models.CASCADE, related_name='mood_scores')
+    mood = models.ForeignKey(Mood, on_delete=models.CASCADE)
+    intensity = models.IntegerField(
+        default=0,
+        validators=[MinValueValidator(0), MaxValueValidator(5)]
+    )
 
     class Meta:
-        unique_together = ('user', 'movie')
+        unique_together = ('review', 'mood')
 
-    def __str__(self):
-        return f"{self.user.username} reviewed {self.movie.title}"
+# --- 2. User Interactions ---
 
 class Favorite(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='favorites')
@@ -63,7 +70,7 @@ class Favorite(models.Model):
         unique_together = ('user', 'movie')
 
     def __str__(self):
-        return f"{self.user.username} favs {self.movie.title}"
+        return f"{self.user.username} likes {self.movie.title}"
 
 class Bookmark(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='bookmarks')
@@ -104,7 +111,4 @@ def create_user_profile(sender, instance, created, **kwargs):
 
 @receiver(post_save, sender=User)
 def save_user_profile(sender, instance, **kwargs):
-    try:
-        instance.profile.save()
-    except Profile.DoesNotExist:
-        Profile.objects.create(user=instance)
+    instance.profile.save()

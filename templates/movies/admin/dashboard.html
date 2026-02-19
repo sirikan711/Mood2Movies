@@ -15,7 +15,7 @@
         <nav class="flex-1 overflow-y-auto py-4 px-3 space-y-1">
             <!-- Menu Items -->
             <a href="{% url 'admin_dashboard' %}" class="flex items-center gap-3 px-4 py-3 bg-gray-700/50 text-yellow-500 rounded-lg font-bold border-l-4 border-yellow-500 transition shadow-inner">
-                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"></path></svg>
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"></path></svg>
                 ภาพรวม
             </a>
             
@@ -28,7 +28,12 @@
                 <svg class="w-5 h-5 group-hover:text-pink-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.828 14.828a4 4 0 01-5.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
                 จัดการอารมณ์
             </a>
-            
+
+            <a href="{% url 'admin_users' %}" class="flex items-center gap-3 px-4 py-3 text-gray-400 hover:bg-gray-700 hover:text-white rounded-lg transition group">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"></path></svg>
+                จัดการผู้ใช้
+            </a>
+
             <a href="{% url 'admin_reviews' %}" class="flex items-center gap-3 px-4 py-3 text-gray-400 hover:bg-gray-700 hover:text-white rounded-lg transition group">
                 <svg class="w-5 h-5 group-hover:text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z"></path></svg>
                 จัดการรีวิว
@@ -129,27 +134,35 @@
                                     <div class="w-8 h-12 bg-gray-900 rounded overflow-hidden flex-shrink-0 shadow-sm">
                                         {% if review.movie.poster_path %}
                                             <img src="https://image.tmdb.org/t/p/w92{{ review.movie.poster_path }}" class="w-full h-full object-cover">
+                                        {% else %}
+                                            <div class="w-full h-full flex items-center justify-center text-[10px] text-gray-500">No Img</div>
                                         {% endif %}
                                     </div>
                                     <span class="text-sm text-gray-300 line-clamp-1">{{ review.movie.title }}</span>
                                 </div>
                             </td>
                             
-                            <!-- Mood Column -->
+                            <!-- Mood & Rating Column (Updated for Multi-Mood) -->
                             <td class="py-4 px-6">
-                                <div class="flex flex-col gap-1">
-                                    <span class="inline-flex w-fit items-center bg-blue-900/40 text-blue-300 px-2 py-0.5 rounded text-xs border border-blue-500/20">
-                                        {{ review.primary_mood.name }}
-                                    </span>
-                                    {% if review.rating %}
-                                    <span class="text-xs text-yellow-500 font-bold">★ {{ review.rating }}</span>
-                                    {% endif %}
+                                <div class="flex flex-wrap gap-1">
+                                    {% for score in review.mood_scores.all %}
+                                        {% if score.intensity > 0 %}
+                                        <span class="inline-flex items-center bg-gray-700 text-gray-300 text-xs px-2 py-1 rounded border border-gray-600">
+                                            <span class="mr-1">{{ score.mood.emoji }}</span>
+                                            {{ score.mood.name }}
+                                            <span class="ml-1 text-purple-400 font-bold">{{ score.intensity }}</span>
+                                        </span>
+                                        {% endif %}
+                                    {% empty %}
+                                        <span class="text-xs text-gray-500">-</span>
+                                    {% endfor %}
                                 </div>
                             </td>
                             
                             <!-- Date Column -->
                             <td class="py-4 px-6 text-sm text-gray-400">
-                                {{ review.created_at|date:"d M Y" }}<br>
+                                {{ review.created_at|date:"d M Y" }}
+                                <br>
                                 <span class="text-xs opacity-60">{{ review.created_at|date:"H:i" }}</span>
                             </td>
 
@@ -159,7 +172,7 @@
                                     <a href="{% url 'movie_detail' review.movie.tmdb_id %}" target="_blank" class="p-2 text-gray-400 hover:text-white hover:bg-gray-700 rounded-lg transition" title="ดูหน้านี้">
                                         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" /></svg>
                                     </a>
-                                    <a href="{% url 'delete_review' review.id %}" onclick="return confirm('ลบรีวิวนี้ในฐานะ Admin?')" class="p-2 text-red-400 hover:text-white hover:bg-red-600 rounded-lg transition" title="ลบ">
+                                    <a href="{% url 'admin_delete_review' review.id %}" onclick="return confirm('ยืนยันที่จะลบรีวิวนี้?')" class="p-2 text-red-400 hover:text-white hover:bg-red-600 rounded-lg transition" title="ลบรีวิว">
                                         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
                                     </a>
                                 </div>

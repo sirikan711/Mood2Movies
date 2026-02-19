@@ -89,18 +89,23 @@
                     </div>
                 </div>
 
-                {% if review.primary_mood %}
-                <div class="mb-3">
-                    <span class="inline-flex items-center bg-gray-700 text-gray-300 text-xs px-2 py-1 rounded-md border border-gray-600">
-                        {{ review.primary_mood }} 
-                        <span class="ml-1 opacity-60">({{ review.mood_intensity }}/5)</span>
-                    </span>
+                <!-- [UPDATED] แสดง Multi-Mood Tags แทน Primary Mood -->
+                <div class="flex flex-wrap gap-2 mb-3">
+                    {% for score in review.mood_scores.all %}
+                        {% if score.intensity > 0 %}
+                        <span class="inline-flex items-center bg-gray-700 text-gray-300 text-xs px-2 py-1 rounded-md border border-gray-600">
+                            <span class="mr-1">{{ score.mood.emoji }}</span>
+                            {{ score.mood.name }} 
+                            <span class="ml-1 text-purple-400 font-bold">{{ score.intensity }}</span>
+                        </span>
+                        {% endif %}
+                    {% endfor %}
                 </div>
-                {% endif %}
 
-                {% if review.review_text %}
+                <!-- [UPDATED] เปลี่ยน review_text เป็น comment -->
+                {% if review.comment %}
                 <p class="text-gray-300 text-sm leading-relaxed line-clamp-3">
-                    "{{ review.review_text }}"
+                    "{{ review.comment }}"
                 </p>
                 {% endif %}
             </div>

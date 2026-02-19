@@ -1,57 +1,86 @@
 {% extends 'base.html' %}
+{% load static %}
 
 {% block content %}
 
+<!-- Movie Header & Backdrop -->
 <div class="relative w-full -mt-4 md:-mt-8 mb-8">
     
+    <!-- Background Blur -->
     <div class="absolute inset-0 w-full h-full overflow-hidden">
-        <img src="{{ movie_tmdb.poster_url }}" class="w-full h-full object-cover filter blur-3xl opacity-30 scale-110">
+        {% if movie.poster_path %}
+        <img src="https://image.tmdb.org/t/p/w1280{{ movie.poster_path }}" class="w-full h-full object-cover filter blur-3xl opacity-30 scale-110">
+        {% else %}
+        <div class="w-full h-full bg-gray-900"></div>
+        {% endif %}
         <div class="absolute inset-0 bg-gradient-to-t from-gray-900 via-gray-900/80 to-transparent"></div>
         <div class="absolute inset-0 bg-gradient-to-r from-gray-900 via-gray-900/60 to-transparent"></div>
     </div>
 
+    <!-- Main Content -->
     <div class="relative z-10 max-w-7xl mx-auto px-4 py-12 md:py-16">
-        <div class="flex flex-col md:flex-row gap-8 md:gap-12 items-start">
+        <div class="flex flex-col lg:flex-row gap-8 md:gap-12 items-start">
             
-            <div class="w-64 md:w-80 lg:w-96 flex-shrink-0 mx-auto md:mx-0 rounded-xl shadow-2xl overflow-hidden border border-gray-700/50 transform md:rotate-1 hover:rotate-0 transition duration-500">
-                <img class="w-full h-auto object-cover" src="{{ movie_tmdb.poster_url }}" alt="{{ movie_tmdb.title }}">
+            <!-- Poster -->
+            <div class="w-64 md:w-80 lg:w-96 flex-shrink-0 mx-auto md:mx-0 rounded-xl shadow-2xl overflow-hidden border border-gray-700/50 transform md:rotate-1 hover:rotate-0 transition duration-500 bg-gray-800">
+                {% if movie.poster_path %}
+                <img class="w-full h-auto object-cover" src="https://image.tmdb.org/t/p/w780{{ movie.poster_path }}" alt="{{ movie.title }}">
+                {% else %}
+                <div class="flex items-center justify-center h-96 text-gray-500">No Image</div>
+                {% endif %}
             </div>
 
+            <!-- Details -->
             <div class="flex-1 text-center md:text-left text-white">
-                <h1 class="text-4xl md:text-6xl font-bold mb-2 leading-tight drop-shadow-lg">{{ movie_tmdb.title }}</h1>
-                <p class="text-2xl text-gray-400 font-light mb-6">({{ movie_tmdb.release_date|slice:":4" }})</p>
+                <h1 class="text-4xl md:text-6xl font-bold mb-2 leading-tight drop-shadow-lg">{{ movie.title }}</h1>
+                <p class="text-2xl text-gray-400 font-light mb-6">({{ movie.release_date|date:"Y" }})</p>
                 
                 <div class="flex flex-wrap justify-center md:justify-start items-center gap-3 mb-8">
-                    {% if movie_tmdb.vote_average %}
+                    {% if movie.vote_average %}
                     <div class="flex items-center bg-yellow-500 text-gray-900 px-3 py-1 rounded-lg font-bold shadow-lg">
                         <svg class="w-4 h-4 mr-1" fill="currentColor" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/></svg>
-                        {{ movie_tmdb.vote_average|floatformat:1 }}
+                        {{ movie.vote_average|floatformat:1 }}
                     </div>
                     {% endif %}
-                    <span class="text-gray-400">|</span>
-                    {% for genre in movie_tmdb.genres %}
-                    <span class="bg-gray-800/80 border border-gray-600 text-gray-200 text-sm px-3 py-1 rounded-full backdrop-blur-sm">{{ genre }}</span>
-                    {% endfor %}
                 </div>
 
-                <div class="mb-10 max-w-3xl">
+                <div class="mb-8 max-w-3xl">
                     <h2 class="text-xl font-semibold text-yellow-500 mb-3 flex items-center justify-center md:justify-start">
                         <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h7"></path></svg>
                         เรื่องย่อ
                     </h2>
-                    <p class="text-gray-300 text-lg leading-relaxed font-light">{{ movie_tmdb.overview|default:"ไม่มีข้อมูลเรื่องย่อภาษาไทย" }}</p>
+                    <p class="text-gray-300 text-lg leading-relaxed font-light">{{ movie.overview|default:"ไม่มีข้อมูลเรื่องย่อ" }}</p>
                 </div>
 
+                <!-- Mood DNA Analysis -->
+                <div class="mb-10 bg-gray-800/50 rounded-xl p-6 border border-gray-700/50 backdrop-blur-sm">
+                    <h3 class="text-xl font-bold text-white mb-4 flex items-center justify-center md:justify-start gap-2">
+                        <span class="text-purple-400">🧬</span> Mood DNA Analysis
+                    </h3>
+                    <div class="flex flex-col md:flex-row items-center gap-8">
+                        <div class="relative w-64 h-64">
+                            <canvas id="moodRadarChart"></canvas>
+                        </div>
+                        <div class="flex-1 grid grid-cols-2 gap-3 w-full max-w-md">
+                            {% for stat in mood_stats %}
+                                {% if stat.score > 0 %}
+                                <div class="bg-gray-700/40 p-2 rounded flex justify-between items-center">
+                                    <span class="text-gray-300 text-sm">{{ stat.name }}</span>
+                                    <span class="text-purple-400 font-bold">{{ stat.score }}</span>
+                                </div>
+                                {% endif %}
+                            {% empty %}
+                                <p class="col-span-2 text-gray-500 text-sm text-center">ยังไม่มีข้อมูลอารมณ์</p>
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Action Buttons -->
                 <div class="flex flex-col sm:flex-row flex-wrap gap-4 justify-center md:justify-start items-center">
-                    
-                    <a href="{% url 'add_review' movie_tmdb.tmdb_id %}" class="bg-gradient-to-r from-yellow-500 to-yellow-600 hover:from-yellow-400 hover:to-yellow-500 text-gray-900 font-bold py-3 px-8 rounded-full transition transform hover:scale-105 shadow-lg flex items-center justify-center group h-12">
-                        <svg class="w-5 h-5 mr-2 transition-transform group-hover:rotate-12" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg>
-                        เขียนรีวิว
-                    </a>
-                    
                     {% if user.is_authenticated %}
-                        
-                        <button id="fav-btn" data-tmdb-id="{{ movie_tmdb.tmdb_id }}" class="bg-gray-800/80 hover:bg-gray-700 backdrop-blur border border-gray-600 text-white font-medium py-3 px-6 rounded-full transition flex items-center justify-center gap-2 min-w-[120px] h-12 {% if is_favorited %}border-pink-500 bg-pink-900/20 text-pink-400{% endif %}">
+                        <!-- ปุ่ม Fav -->
+                        <button id="fav-btn" data-tmdb-id="{{ movie.tmdb_id }}" class="bg-gray-800/80 hover:bg-gray-700 backdrop-blur border border-gray-600 text-white font-medium py-3 px-6 rounded-full transition flex items-center justify-center gap-2 min-w-[120px] h-12 {% if is_favorited %}border-pink-500 bg-pink-900/20 text-pink-400{% endif %}">
                             <span id="fav-icon">
                                 {% if is_favorited %}
                                 <svg class="w-5 h-5 text-pink-500" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M3.172 5.172a4 4 0 015.656 0L10 6.343l1.172-1.171a4 4 0 115.656 5.656L10 17.657l-6.828-6.829a4 4 0 010-5.656z" clip-rule="evenodd"></path></svg>
@@ -62,7 +91,8 @@
                             <span id="fav-text">{% if is_favorited %}Fav แล้ว{% else %}Favorite{% endif %}</span>
                         </button>
 
-                        <button id="bookmark-btn" data-tmdb-id="{{ movie_tmdb.tmdb_id }}" class="bg-gray-800/80 hover:bg-gray-700 backdrop-blur border border-gray-600 text-white font-medium py-3 px-6 rounded-full transition flex items-center justify-center gap-2 min-w-[120px] h-12 {% if is_bookmarked %}border-blue-500 bg-blue-900/20 text-blue-400{% endif %}">
+                        <!-- ปุ่ม Bookmark -->
+                        <button id="bookmark-btn" data-tmdb-id="{{ movie.tmdb_id }}" class="bg-gray-800/80 hover:bg-gray-700 backdrop-blur border border-gray-600 text-white font-medium py-3 px-6 rounded-full transition flex items-center justify-center gap-2 min-w-[120px] h-12 {% if is_bookmarked %}border-blue-500 bg-blue-900/20 text-blue-400{% endif %}">
                              <span id="bookmark-icon">
                                 {% if is_bookmarked %}
                                 <svg class="w-5 h-5 text-blue-500" fill="currentColor" viewBox="0 0 20 20"><path d="M5 4a2 2 0 012-2h6a2 2 0 012 2v14l-5-2.5L5 18V4z"></path></svg>
@@ -73,6 +103,7 @@
                              <span id="bookmark-text">{% if is_bookmarked %}Saved{% else %}Save{% endif %}</span>
                         </button>
 
+                        <!-- ปุ่ม List -->
                         <div class="relative group h-12">
                             <button class="h-full bg-gray-800/80 hover:bg-purple-900/40 hover:border-purple-500 backdrop-blur border border-gray-600 text-white font-medium py-3 px-6 rounded-full transition flex items-center justify-center gap-2 min-w-[120px]">
                                 <svg class="w-5 h-5 text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 10h16M4 14h16M4 18h16"></path></svg>
@@ -80,35 +111,32 @@
                                 <svg class="w-3 h-3 ml-1 opacity-50 group-hover:rotate-180 transition-transform duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
                             </button>
                             
+                            <!-- Dropdown List -->
                             <div class="absolute top-full left-0 pt-2 w-64 hidden group-hover:block z-50 animate-fade-in-up">
-                                
                                 <div class="bg-gray-800 rounded-xl shadow-2xl border border-gray-700 overflow-hidden">
                                     <div class="px-4 py-3 border-b border-gray-700 bg-gray-900/50">
                                         <span class="text-xs font-bold text-gray-400 uppercase tracking-wider">Add to List</span>
                                     </div>
-                                    
                                     <div class="max-h-48 overflow-y-auto scrollbar-hide py-1">
                                         {% if user_lists %}
                                             {% for list in user_lists %}
-                                            <button onclick="toggleList('{{ list.id }}', '{{ movie_tmdb.tmdb_id }}', this, event)" 
-                                                    class="w-full text-left px-4 py-2.5 text-sm hover:bg-purple-900/20 hover:text-white flex justify-between items-center transition group/item
-                                                           {% if list.has_movie %}text-yellow-500 font-bold{% else %}text-gray-300{% endif %}">
-                                                        <span class="truncate pr-2">{{ list.name }}</span>
-                                                        <span class="status-icon transform scale-0 group-hover/item:scale-100 transition-transform duration-200 {% if list.has_movie %}scale-100{% endif %}">
-                                                            {% if list.has_movie %}
-                                                                <svg class="w-4 h-4 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
-                                                            {% else %}
-                                                                <svg class="w-4 h-4 text-gray-500 group-hover/item:text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
-                                                            {% endif %}
-                                                        </span>
+                                            <button onclick="toggleList('{{ list.id }}', '{{ movie.tmdb_id }}', this, event)" 
+                                                    class="w-full text-left px-4 py-2.5 text-sm hover:bg-purple-900/20 hover:text-white flex justify-between items-center transition group/item {% if list.has_movie %}text-yellow-500 font-bold{% else %}text-gray-300{% endif %}">
+                                                <span class="truncate pr-2">{{ list.name }}</span>
+                                                <span class="status-icon transform scale-0 group-hover/item:scale-100 transition-transform duration-200 {% if list.has_movie %}scale-100{% endif %}">
+                                                    {% if list.has_movie %}
+                                                        <svg class="w-4 h-4 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+                                                    {% else %}
+                                                        <svg class="w-4 h-4 text-gray-500 group-hover/item:text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
+                                                    {% endif %}
+                                                </span>
                                             </button>
                                             {% endfor %}
                                         {% else %}
                                             <div class="px-4 py-3 text-sm text-gray-500 text-center italic">ยังไม่มีรายการ</div>
                                         {% endif %}
                                     </div>
-                                    
-                                    <a href="{% url 'create_list' %}" class="block w-full text-center px-4 py-3 text-sm text-purple-400 hover:text-purple-300 hover:bg-gray-700 border-t border-gray-700 font-medium transition">
+                                    <a href="{% url 'my_lists' %}" class="block w-full text-center px-4 py-3 text-sm text-purple-400 hover:text-purple-300 hover:bg-gray-700 border-t border-gray-700 font-medium transition">
                                         + สร้างรายการใหม่
                                     </a>
                                 </div>
@@ -127,6 +155,121 @@
 </div>
 
 <div class="max-w-5xl mx-auto px-4 pb-20">
+
+    <!-- ส่วนแสดงรีวิวของฉัน + ฟอร์ม -->
+    <div id="my-review-section" class="mb-12">
+        
+        <!-- CASE A: ถ้า User รีวิวไปแล้ว -> แสดงการ์ดรีวิว (ซ่อนฟอร์ม) -->
+        {% if user_review %}
+        <div id="user-review-display" class="bg-gradient-to-r from-gray-800 to-gray-800/80 border border-gray-700 rounded-2xl p-6 md:p-8 shadow-xl relative overflow-hidden group">
+            <div class="absolute top-0 right-0 w-32 h-32 bg-purple-500/10 rounded-full blur-3xl -mr-16 -mt-16 pointer-events-none"></div>
+            
+            <div class="flex justify-between items-start mb-6">
+                <div>
+                    <h2 class="text-2xl font-bold text-white flex items-center gap-2">
+                        <span class="text-3xl">🎉</span>
+                        รีวิวของคุณ
+                    </h2>
+                    <p class="text-gray-400 text-sm mt-1">ขอบคุณที่ร่วมแบ่งปันความรู้สึก!</p>
+                </div>
+                
+                <div class="flex items-center gap-2">
+                    <!-- ปุ่มแก้ไข -->
+                    <button onclick="editMyReview()" class="px-4 py-2 bg-gray-700 hover:bg-gray-600 text-white text-sm font-medium rounded-lg transition flex items-center gap-2 shadow-sm border border-gray-600">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"/></svg>
+                        แก้ไข
+                    </button>
+                    <!-- ปุ่มลบ -->
+                    <a href="{% url 'delete_review' user_review.id %}" onclick="return confirm('คุณต้องการลบุรีวิวนี้ใช่หรือไม่?')" class="px-4 py-2 bg-red-500/10 hover:bg-red-500/20 text-red-400 text-sm font-medium rounded-lg transition flex items-center gap-2 border border-red-500/20 hover:border-red-500/50">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+                        ลบ
+                    </a>
+                </div>
+            </div>
+
+            <!-- แสดงคะแนนอารมณ์ -->
+            <div class="flex flex-wrap gap-2 mb-4">
+                {% for score in user_review.mood_scores.all %}
+                    {% if score.intensity > 0 %}
+                    <span class="inline-flex items-center bg-gray-900/50 text-gray-200 px-3 py-1.5 rounded-lg border border-gray-600/50 text-sm">
+                        <span class="mr-2 text-lg">{{ score.mood.emoji }}</span>
+                        {{ score.mood.name }} 
+                        <span class="ml-2 text-purple-400 font-bold">{{ score.intensity }}/5</span>
+                    </span>
+                    {% endif %}
+                {% endfor %}
+            </div>
+
+            <!-- แสดงคอมเมนต์ -->
+            {% if user_review.comment %}
+            <div class="bg-gray-900/30 p-4 rounded-xl border border-gray-700/30">
+                <p class="text-gray-300 leading-relaxed font-light">"{{ user_review.comment }}"</p>
+            </div>
+            {% endif %}
+        </div>
+        {% endif %}
+
+        <!-- CASE B: ฟอร์มรีวิว (ซ่อนถ้ามีรีวิวแล้ว จะโชว์เมื่อกดแก้ไข) -->
+        <div id="review-form-container" class="bg-gray-800/30 border border-gray-700 rounded-2xl p-6 md:p-8 transition-all duration-500 ease-in-out {% if user_review %}hidden{% endif %}">
+            <h2 id="form-title" class="text-2xl font-bold text-white mb-6 flex items-center">
+                <span class="bg-purple-500 w-1.5 h-6 mr-3 rounded-full"></span>
+                {% if user_review %}แก้ไขรีวิวของคุณ{% else %}ความรู้สึกของคุณคือ?{% endif %}
+            </h2>
+            
+            {% if user.is_authenticated %}
+            <form id="reviewForm" method="POST" action="{% if user_review %}{% url 'edit_review' user_review.id %}{% else %}{% url 'movie_detail' movie.tmdb_id %}{% endif %}" class="space-y-6">
+                {% csrf_token %}
+                
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <!-- ส่วน Slider อารมณ์ -->
+                    <div class="space-y-4 bg-gray-900/50 p-4 rounded-xl border border-gray-700/50 max-h-80 overflow-y-auto custom-scrollbar">
+                        <p class="text-sm text-gray-400 mb-2">เลื่อนเพื่อระบุระดับความรู้สึก (0-5)</p>
+                        {% for mood in all_moods %}
+                        <div>
+                            <div class="flex justify-between items-center mb-1">
+                                <label class="text-sm font-medium text-gray-300 flex items-center gap-2">
+                                    <span class="text-lg">{{ mood.emoji }}</span> {{ mood.name }}
+                                </label>
+                                <span class="text-sm font-bold text-purple-400" id="val-{{ mood.id }}">0</span>
+                            </div>
+                            <input type="range" 
+                                   id="mood-slider-{{ mood.id }}"
+                                   name="mood_score_{{ mood.id }}" 
+                                   min="0" max="5" value="0" 
+                                   class="w-full h-2 bg-gray-700 rounded-lg appearance-none cursor-pointer accent-purple-500"
+                                   oninput="document.getElementById('val-{{ mood.id }}').innerText = this.value">
+                        </div>
+                        {% endfor %}
+                    </div>
+
+                    <!-- ส่วน Comment -->
+                    <div class="flex flex-col">
+                        <label class="text-sm font-medium text-gray-300 mb-2">ความคิดเห็นเพิ่มเติม</label>
+                        <textarea id="reviewComment" name="comment" rows="6" class="w-full bg-gray-700 border border-gray-600 rounded-xl px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:border-purple-500 transition" placeholder="หนังเรื่องนี้เป็นยังไงบ้าง...">{% if user_review %}{{ user_review.comment }}{% endif %}</textarea>
+                        
+                        <div class="mt-auto pt-4 flex gap-3">
+                            <!-- ปุ่มยกเลิก (แสดงเฉพาะตอนแก้ไข) -->
+                            <button type="button" id="cancelEditBtn" onclick="cancelEditMode()" class="{% if not user_review %}hidden{% endif %} flex-1 bg-gray-700 hover:bg-gray-600 text-gray-300 font-bold py-3 rounded-xl transition">
+                                ยกเลิก
+                            </button>
+                            <!-- ปุ่ม Submit -->
+                            <button type="submit" id="submitBtn" class="flex-1 bg-gradient-to-r {% if user_review %}from-yellow-500 to-orange-500 hover:from-yellow-400 hover:to-orange-400 text-gray-900{% else %}from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white{% endif %} font-bold py-3 rounded-xl transition transform hover:scale-[1.02] shadow-lg">
+                                {% if user_review %}บันทึกการแก้ไข{% else %}ส่งรีวิว{% endif %}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </form>
+            {% else %}
+            <div class="text-center py-6">
+                <p class="text-gray-400 mb-4">เข้าสู่ระบบเพื่อบันทึกความรู้สึกของคุณ</p>
+                <a href="{% url 'login' %}?next={{ request.path }}" class="inline-flex items-center px-6 py-2 bg-purple-600 hover:bg-purple-700 text-white font-bold rounded-full transition">Login / Register</a>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- รายการรีวิวคนอื่น -->
     <div class="mb-10 flex items-center justify-between border-b border-gray-800 pb-4">
         <h2 class="text-2xl font-bold text-white flex items-center">
             <span class="bg-yellow-500 w-1.5 h-6 mr-3 rounded-full"></span>
@@ -138,181 +281,256 @@
     {% if reviews %}
         <div class="space-y-6">
             {% for review in reviews %}
-            <div class="flex gap-4 md:gap-6 animate-fade-in-up">
-                <div class="flex-shrink-0">
-                    <div class="w-12 h-12 rounded-full overflow-hidden bg-gray-700 border border-gray-600">
-                        {% if review.user.profile.avatar %}
-                            <img src="{{ review.user.profile.avatar.url }}" class="w-full h-full object-cover">
-                        {% else %}
-                            <div class="w-full h-full flex items-center justify-center text-gray-400 font-bold text-lg">
+                <!-- ซ่อนรีวิวของตัวเองในลิสต์รวม เพื่อไม่ให้ซ้ำซ้อน -->
+                {% if review.user != request.user %}
+                <div class="flex gap-4 md:gap-6 animate-fade-in-up">
+                    <div class="flex-shrink-0">
+                        <div class="w-12 h-12 rounded-full overflow-hidden bg-gray-700 border border-gray-600 flex items-center justify-center text-lg font-bold text-white">
+                            {% if review.user.profile.avatar %}
+                                <img src="{{ review.user.profile.avatar.url }}" class="w-full h-full object-cover">
+                            {% else %}
                                 {{ review.user.username|slice:":1"|upper }}
+                            {% endif %}
+                        </div>
+                    </div>
+                    
+                    <div class="flex-1 min-w-0 pb-6 border-b border-gray-800 last:border-0">
+                        <div class="flex justify-between items-start mb-2">
+                            <div>
+                                <span class="font-bold text-white text-lg">{{ review.user.username }}</span>
+                                <span class="text-gray-500 text-sm ml-2">{{ review.created_at|date:"d M Y" }}</span>
                             </div>
-                        {% endif %}
+                        </div>
+
+                        <div class="flex flex-wrap gap-2 mb-3">
+                            {% for score in review.mood_scores.all %}
+                                {% if score.intensity > 0 %}
+                                <span class="flex items-center text-gray-200 bg-gray-700 px-2.5 py-1 rounded-md text-xs border border-gray-600">
+                                    <span class="mr-1">{{ score.mood.emoji }}</span>
+                                    {{ score.mood.name }} 
+                                    <span class="ml-1 text-purple-400 font-bold">{{ score.intensity }}</span>
+                                </span>
+                                {% endif %}
+                            {% endfor %}
+                        </div>
+                        
+                        <p class="text-gray-300 leading-relaxed font-light text-base">{{ review.comment }}</p>
                     </div>
                 </div>
-                <div class="flex-1 min-w-0 pb-6 border-b border-gray-800 last:border-0">
-                    <div class="flex justify-between items-start mb-2">
-                        <div>
-                            <span class="font-bold text-white text-lg hover:text-yellow-400 cursor-pointer transition">{{ review.user.username }}</span>
-                            <span class="text-gray-500 text-sm ml-2">{{ review.created_at|date:"d M Y" }}</span>
-                        </div>
-                        {% if request.user == review.user %}
-                        <div class="flex items-center gap-3 text-sm">
-                            <a href="{% url 'edit_review' review.id %}" class="text-gray-500 hover:text-blue-400 transition flex items-center"><svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"/></svg>แก้ไข</a>
-                            <a href="{% url 'delete_review' review.id %}" onclick="return confirm('ลบรีวิวนี้?')" class="text-gray-500 hover:text-red-400 transition flex items-center"><svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>ลบ</a>
-                        </div>
-                        {% endif %}
-                    </div>
-                    <div class="flex items-center gap-3 mb-3">
-                        {% if review.primary_mood %}
-                        <span class="flex items-center text-blue-300 bg-blue-500/10 px-3 py-0.5 rounded-full text-xs border border-blue-500/20">{{ review.primary_mood.name }}</span>
-                        {% endif %}
-                        {% if review.mood_intensity %}
-                        <span class="flex items-center text-blue-300 bg-blue-500/10 px-3 py-0.5 rounded-full text-xs border border-blue-500/20">ระดับ {{ review.mood_intensity }}/5</span>
-                        {% endif %}
-                    </div>
-                    {% if review.review_text %}
-                        <p class="text-gray-300 leading-relaxed font-light text-base">{{ review.review_text }}</p>
-                    {% endif %}
-                </div>
-            </div>
+                {% endif %}
             {% endfor %}
         </div>
     {% else %}
+        <!-- Empty State -->
         <div class="py-16 text-center">
             <div class="w-16 h-16 bg-gray-800 rounded-full flex items-center justify-center mx-auto mb-4 text-gray-600">
                 <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"></path></svg>
             </div>
             <h3 class="text-xl font-bold text-gray-300 mb-2">ยังไม่มีใครรีวิวเรื่องนี้</h3>
-            <p class="text-gray-500 mb-6">เป็นคนแรกที่แบ่งปันความรู้สึกของคุณกับเรา</p>
-            <a href="{% url 'add_review' movie_tmdb.tmdb_id %}" class="inline-flex items-center px-6 py-2.5 bg-yellow-500 hover:bg-yellow-400 text-gray-900 font-bold rounded-full transition shadow-lg hover:shadow-yellow-500/20">เขียนรีวิวคนแรก</a>
+            <p class="text-gray-500">เป็นคนแรกที่เริ่มระบายสีอารมณ์ให้หนังเรื่องนี้กันเถอะ</p>
         </div>
     {% endif %}
 </div>
 
+<!-- Scripts -->
+{{ mood_stats|json_script:"mood-data" }}
+
+<!-- Script สำหรับปั้นข้อมูล User Review เดิม -->
+{% if user_review %}
 <script>
-document.addEventListener('DOMContentLoaded', function() {
-    const favBtn = document.getElementById('fav-btn');
-    const bookmarkBtn = document.getElementById('bookmark-btn');
-
-    // Define Icons (SVG Strings)
-    const icons = {
-        fav: {
-            active: '<svg class="w-5 h-5 text-pink-500" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M3.172 5.172a4 4 0 015.656 0L10 6.343l1.172-1.171a4 4 0 115.656 5.656L10 17.657l-6.828-6.829a4 4 0 010-5.656z" clip-rule="evenodd"></path></svg>',
-            inactive: '<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"></path></svg>'
-        },
-        bookmark: {
-            active: '<svg class="w-5 h-5 text-blue-500" fill="currentColor" viewBox="0 0 20 20"><path d="M5 4a2 2 0 012-2h6a2 2 0 012 2v14l-5-2.5L5 18V4z"></path></svg>',
-            inactive: '<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z"></path></svg>'
-        }
+    // เก็บข้อมูลคะแนนเดิมไว้ในตัวแปร JS เพื่อเอามาเติมใส่ Form ตอนกดแก้ไข
+    const myReviewScores = {
+        {% for score in user_review.mood_scores.all %}
+            "{{ score.mood.id }}": {{ score.intensity }},
+        {% endfor %}
     };
+</script>
+{% endif %}
 
-    async function toggleAction(url, btn, iconContainer, textSpan, type, textActive, textInactive, activeClasses, inactiveClasses) {
-        if (btn.disabled) return;
-        btn.disabled = true;
-        btn.style.opacity = '0.7';
-
-        try {
-            const response = await fetch(url, {
-                method: 'POST',
-                headers: {
-                    'X-CSRFToken': '{{ csrf_token }}',
-                    'Content-Type': 'application/json'
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    // --- UX Functions: Toggle Edit Mode ---
+    function editMyReview() {
+        const displayCard = document.getElementById('user-review-display');
+        const formContainer = document.getElementById('review-form-container');
+        
+        // ซ่อนการ์ดแสดงผล -> โชว์ฟอร์ม
+        if(displayCard) displayCard.classList.add('hidden');
+        formContainer.classList.remove('hidden');
+        
+        // เติมข้อมูลคะแนนเดิมลงใน Slider
+        if (typeof myReviewScores !== 'undefined') {
+            for (const [moodId, score] of Object.entries(myReviewScores)) {
+                const slider = document.getElementById(`mood-slider-${moodId}`);
+                const valDisplay = document.getElementById(`val-${moodId}`);
+                if (slider && valDisplay) {
+                    slider.value = score;
+                    valDisplay.innerText = score;
                 }
+            }
+        }
+    }
+
+    function cancelEditMode() {
+        const displayCard = document.getElementById('user-review-display');
+        const formContainer = document.getElementById('review-form-container');
+        
+        // ถ้ามี User Review อยู่แล้ว ให้กลับไปโชว์การ์ด
+        if(displayCard) {
+            formContainer.classList.add('hidden');
+            displayCard.classList.remove('hidden');
+        } else {
+            // ถ้าไม่มี (เป็นเคสอื่น) ก็แค่เคลียร์ฟอร์ม
+            document.getElementById('reviewForm').reset();
+        }
+    }
+
+    // --- Chart.js Setup ---
+    document.addEventListener('DOMContentLoaded', function() {
+        const ctx = document.getElementById('moodRadarChart');
+        if (ctx) {
+            const moodDataRaw = document.getElementById('mood-data');
+            if (moodDataRaw) {
+                const moodData = JSON.parse(moodDataRaw.textContent);
+                const labels = moodData.map(d => d.name);
+                const data = moodData.map(d => d.score);
+
+                new Chart(ctx, {
+                    type: 'radar',
+                    data: {
+                        labels: labels,
+                        datasets: [{
+                            label: 'Mood Intensity',
+                            data: data,
+                            backgroundColor: 'rgba(168, 85, 247, 0.2)', 
+                            borderColor: 'rgba(168, 85, 247, 1)',
+                            borderWidth: 2,
+                            pointBackgroundColor: '#fff',
+                            pointBorderColor: 'rgba(168, 85, 247, 1)',
+                        }]
+                    },
+                    options: {
+                        scales: {
+                            r: {
+                                angleLines: { color: 'rgba(255, 255, 255, 0.1)' },
+                                grid: { color: 'rgba(255, 255, 255, 0.1)' },
+                                pointLabels: { color: 'rgba(209, 213, 219, 1)', font: { size: 10 } },
+                                ticks: { display: false, max: 5, min: 0 },
+                                suggestedMin: 0, suggestedMax: 5
+                            }
+                        },
+                        plugins: { legend: { display: false } },
+                        maintainAspectRatio: false
+                    }
+                });
+            }
+        }
+        
+        // --- Fav/Bookmark/List Scripts ---
+        const favBtn = document.getElementById('fav-btn');
+        const bookmarkBtn = document.getElementById('bookmark-btn');
+
+        const icons = {
+            fav: {
+                active: '<svg class="w-5 h-5 text-pink-500" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M3.172 5.172a4 4 0 015.656 0L10 6.343l1.172-1.171a4 4 0 115.656 5.656L10 17.657l-6.828-6.829a4 4 0 010-5.656z" clip-rule="evenodd"></path></svg>',
+                inactive: '<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"></path></svg>'
+            },
+            bookmark: {
+                active: '<svg class="w-5 h-5 text-blue-500" fill="currentColor" viewBox="0 0 20 20"><path d="M5 4a2 2 0 012-2h6a2 2 0 012 2v14l-5-2.5L5 18V4z"></path></svg>',
+                inactive: '<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z"></path></svg>'
+            }
+        };
+
+        async function toggleAction(url, btn, iconContainer, textSpan, type, textActive, textInactive, activeClasses, inactiveClasses) {
+            if (btn.disabled) return;
+            btn.disabled = true;
+            btn.style.opacity = '0.7';
+
+            try {
+                const response = await fetch(url, {
+                    method: 'POST',
+                    headers: {
+                        'X-CSRFToken': '{{ csrf_token }}',
+                        'Content-Type': 'application/json'
+                    }
+                });
+                
+                if (!response.ok) throw new Error('Network error');
+                const data = await response.json();
+                
+                btn.classList.remove('border-pink-500', 'bg-pink-900/20', 'text-pink-400', 'border-blue-500', 'bg-blue-900/20', 'text-blue-400', 'bg-gray-800/80', 'hover:bg-gray-700', 'border-gray-600', 'text-white');
+                
+                if (data.status === 'added') {
+                    activeClasses.split(' ').forEach(cls => btn.classList.add(cls));
+                    iconContainer.innerHTML = icons[type].active;
+                    textSpan.textContent = textActive;
+                } else {
+                    inactiveClasses.split(' ').forEach(cls => btn.classList.add(cls));
+                    iconContainer.innerHTML = icons[type].inactive;
+                    textSpan.textContent = textInactive;
+                }
+            } catch (error) {
+                console.error(error);
+            } finally {
+                btn.disabled = false;
+                btn.style.opacity = '1';
+            }
+        }
+
+        if (favBtn) {
+            favBtn.addEventListener('click', function() {
+                toggleAction(
+                    `/movies/movie/${this.dataset.tmdbId}/favorite/`, 
+                    this, 
+                    document.getElementById('fav-icon'), 
+                    document.getElementById('fav-text'),
+                    'fav', 
+                    'Fav แล้ว', 'Favorite',
+                    'border-pink-500 bg-pink-900/20 text-pink-400 backdrop-blur border', 
+                    'bg-gray-800/80 hover:bg-gray-700 backdrop-blur border-gray-600 text-white border'
+                );
             });
-            
-            if (!response.ok) throw new Error('Network error');
+        }
+
+        if (bookmarkBtn) {
+            bookmarkBtn.addEventListener('click', function() {
+                toggleAction(
+                    `/movies/movie/${this.dataset.tmdbId}/bookmark/`,
+                    this, 
+                    document.getElementById('bookmark-icon'), 
+                    document.getElementById('bookmark-text'),
+                    'bookmark', 
+                    'Saved', 'Save',
+                    'border-blue-500 bg-blue-900/20 text-blue-400 backdrop-blur border',
+                    'bg-gray-800/80 hover:bg-gray-700 backdrop-blur border-gray-600 text-white border'
+                );
+            });
+        }
+    });
+    
+    // Toggle List Function
+    async function toggleList(listId, tmdbId, btn, event) {
+        if(event) { event.preventDefault(); event.stopPropagation(); }
+        try {
+            const response = await fetch(`/movies/lists/${listId}/toggle/${tmdbId}/`, {
+                method: 'POST',
+                headers: { 'X-CSRFToken': '{{ csrf_token }}', 'Content-Type': 'application/json' }
+            });
             const data = await response.json();
-            
-            // Reset base classes (keep layout classes)
-            btn.classList.remove('border-pink-500', 'bg-pink-900/20', 'text-pink-400', 'border-blue-500', 'bg-blue-900/20', 'text-blue-400', 'bg-gray-800/80', 'hover:bg-gray-700', 'border-gray-600', 'text-white');
-            
+            const iconSpan = btn.querySelector('.status-icon');
             if (data.status === 'added') {
-                activeClasses.split(' ').forEach(cls => btn.classList.add(cls));
-                iconContainer.innerHTML = icons[type].active;
-                textSpan.textContent = textActive;
-            } else {
-                inactiveClasses.split(' ').forEach(cls => btn.classList.add(cls));
-                iconContainer.innerHTML = icons[type].inactive;
-                textSpan.textContent = textInactive;
+                btn.classList.add('text-yellow-500', 'font-bold');
+                btn.classList.remove('text-gray-300');
+                iconSpan.innerHTML = '<svg class="w-4 h-4 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>';
+                iconSpan.classList.add('scale-100');
+            } else if (data.status === 'removed') {
+                btn.classList.remove('text-yellow-500', 'font-bold');
+                btn.classList.add('text-gray-300');
+                iconSpan.innerHTML = '<svg class="w-4 h-4 text-gray-500 group-hover/item:text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>';
+                iconSpan.classList.remove('scale-100');
             }
-        } catch (error) {
-            console.error(error);
-        } finally {
-            btn.disabled = false;
-            btn.style.opacity = '1';
-        }
+        } catch (error) { console.error('Error:', error); }
     }
-
-    if (favBtn) {
-        favBtn.addEventListener('click', function() {
-            toggleAction(
-                `/movies/movie/${this.dataset.tmdbId}/favorite/`, 
-                this, 
-                document.getElementById('fav-icon'), 
-                document.getElementById('fav-text'),
-                'fav', 
-                'Fav แล้ว', 'Favorite',
-                'border-pink-500 bg-pink-900/20 text-pink-400 backdrop-blur border', 
-                'bg-gray-800/80 hover:bg-gray-700 backdrop-blur border-gray-600 text-white border'
-            );
-        });
-    }
-
-    if (bookmarkBtn) {
-        bookmarkBtn.addEventListener('click', function() {
-            toggleAction(
-                `/movies/movie/${this.dataset.tmdbId}/bookmark/`,
-                this, 
-                document.getElementById('bookmark-icon'), 
-                document.getElementById('bookmark-text'),
-                'bookmark', 
-                'Saved', 'Save',
-                'border-blue-500 bg-blue-900/20 text-blue-400 backdrop-blur border',
-                'bg-gray-800/80 hover:bg-gray-700 backdrop-blur border-gray-600 text-white border'
-            );
-        });
-    }
-});
-
-// ฟังก์ชัน Toggle List (Updated: เพิ่ม event และ stopPropagation)
-async function toggleList(listId, tmdbId, btn, event) {
-    // ป้องกันการคลิกทะลุ และทำให้เมนูเสถียรขึ้น
-    if(event) {
-        event.preventDefault();
-        event.stopPropagation();
-    }
-
-    try {
-        const response = await fetch(`/movies/lists/${listId}/toggle/${tmdbId}/`, {
-            method: 'POST',
-            headers: {
-                'X-CSRFToken': '{{ csrf_token }}',
-                'Content-Type': 'application/json'
-            }
-        });
-        
-        const data = await response.json();
-        const iconSpan = btn.querySelector('.status-icon');
-        
-        if (data.status === 'added') {
-            btn.classList.add('text-yellow-500', 'font-bold');
-            btn.classList.remove('text-gray-300');
-            // SVG Checkmark
-            iconSpan.innerHTML = '<svg class="w-4 h-4 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>';
-            iconSpan.classList.add('scale-100');
-        } else if (data.status === 'removed') {
-            btn.classList.remove('text-yellow-500', 'font-bold');
-            btn.classList.add('text-gray-300');
-            // SVG Plus (จางๆ)
-            iconSpan.innerHTML = '<svg class="w-4 h-4 text-gray-500 group-hover/item:text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>';
-            iconSpan.classList.remove('scale-100');
-        }
-    } catch (error) {
-        console.error('Error:', error);
-        alert('เกิดข้อผิดพลาด กรุณาลองใหม่');
-    }
-}
 </script>
 
 {% endblock %}

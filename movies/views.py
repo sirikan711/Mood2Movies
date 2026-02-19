@@ -11,7 +11,7 @@ from django.views.decorators.http import require_POST
 from django.contrib.auth.models import User
 from datetime import date, timedelta
 
-from .models import Movie, Review, Mood, Favorite, Bookmark, CustomList
+from .models import Movie, Review, Mood, Favorite, Bookmark, CustomList, ReviewMoodScore
 from .forms import ReviewForm, CustomListForm
 from .utils import search_movies_tmdb, get_movie_details_tmdb, get_tmdb_genres, get_movies_in_date_range
 
@@ -20,7 +20,7 @@ from .utils import search_movies_tmdb, get_movie_details_tmdb, get_tmdb_genres, 
 # ==========================================
 
 def search_movies(request):
-    """ค้นหาภาพยนตร์ (รองรับชื่อ, อารมณ์, ปี, ประเภท)"""
+    """ค้นหาภาพยนตร์ (รองรับชื่อ, อารมณ์แบบใหม่ Multi-Mood, ปี, ประเภท)"""
     query = request.GET.get('q', '').strip()
     mood_id = request.GET.get('mood')
     year = request.GET.get('year')
@@ -33,7 +33,12 @@ def search_movies(request):
     if mood_id:
         search_source = "local"
         mood = get_object_or_404(Mood, id=mood_id)
-        movies_qs = Movie.objects.filter(reviews__primary_mood=mood).distinct()
+        
+        # กรองจากตารางลูก ReviewMoodScore ที่คะแนน > 0 เท่านั้น
+        movies_qs = Movie.objects.filter(
+            reviews__mood_scores__mood=mood,
+            reviews__mood_scores__intensity__gt=0 
+        ).distinct()
         
         if query:
             movies_qs = movies_qs.filter(title__icontains=query)
@@ -41,14 +46,12 @@ def search_movies(request):
             movies_qs = movies_qs.filter(release_date__year=year)
             
         for m in movies_qs:
-            # ตัดส่วนคำนวณ Rating ออกแล้ว
             movies.append({
                 'tmdb_id': m.tmdb_id,
                 'title': m.title,
                 'release_date': str(m.release_date) if m.release_date else 'N/A',
                 'poster_url': f"https://image.tmdb.org/t/p/w500{m.poster_path}" if m.poster_path else None,
                 'overview': m.overview,
-                # ไม่ส่ง local_rating ไปแล้ว
             })
 
     # Case 2: ค้นหาจาก TMDb API (เมื่อไม่มี Mood)
@@ -75,40 +78,109 @@ def search_movies(request):
     })
 
 def movie_detail(request, tmdb_id):
-    """แสดงรายละเอียดภาพยนตร์และรีวิว (อัปเดตใหม่ รองรับ List)"""
+    """แสดงรายละเอียดภาพยนตร์และรีวิว (อัปเดตใหม่ รองรับ Multi-Mood & Radar Chart)"""
+    
+    # 1. จัดการข้อมูลหนัง (หาใน DB หรือดึงจาก TMDB)
     movie = Movie.objects.filter(tmdb_id=tmdb_id).first()
     tmdb_data = get_movie_details_tmdb(tmdb_id)
     
     if not tmdb_data:
          return render(request, '404.html')
+
+    # ถ้ายังไม่มีหนังใน DB ให้สร้างใหม่
+    if not movie and tmdb_data:
+        movie = Movie.objects.create(
+            tmdb_id=tmdb_data['tmdb_id'], 
+            title=tmdb_data['title'],
+            poster_path=tmdb_data.get('poster_path'),
+            overview=tmdb_data.get('overview', ''),
+            release_date=tmdb_data.get('release_date') or None,
+            vote_average=tmdb_data.get('vote_average', 0)
+        )
+
+    # 2. Handle Review Submission (POST)
+    if request.method == 'POST' and request.user.is_authenticated:
+        
+        # Check Duplicate Review
+        if Review.objects.filter(user=request.user, movie=movie).exists():
+            messages.warning(request, 'คุณได้รีวิวหนังเรื่องนี้ไปแล้ว หากต้องการเปลี่ยนคะแนน กรุณาแก้ไขรีวิวเดิม')
+            return redirect('movie_detail', tmdb_id=tmdb_id)
+
+        form = ReviewForm(request.POST)
+        if form.is_valid():
+            review = form.save(commit=False)
+            review.movie = movie
+            review.user = request.user
+            review.save()
+
+            # วนลูปเก็บคะแนน Mood Score
+            all_moods = Mood.objects.all()
+            for mood in all_moods:
+                score_key = f'mood_score_{mood.id}'
+                score_val = request.POST.get(score_key)
+                if score_val and score_val.isdigit():
+                    intensity = int(score_val)
+                    if intensity > 0:
+                        ReviewMoodScore.objects.create(
+                            review=review,
+                            mood=mood,
+                            intensity=intensity
+                        )
+            messages.success(request, 'บันทึกรีวิวเรียบร้อยแล้ว!')
+            return redirect('movie_detail', tmdb_id=movie.tmdb_id)
+    else:
+        form = ReviewForm()
     
+    # 3. เตรียมข้อมูลแสดงผล
     reviews = []
     is_favorited = False
     is_bookmarked = False
-    user_lists = [] # เตรียมตัวแปรไว้เก็บ List ของ User
+    user_lists = []
+    mood_stats = []
+    all_moods = Mood.objects.all()
+    user_review = None
 
     if movie:
-        reviews = movie.reviews.select_related('user', 'user__profile', 'primary_mood').order_by('-created_at')
+        reviews = movie.reviews.select_related('user', 'user__profile') \
+                               .prefetch_related('mood_scores__mood') \
+                               .order_by('-created_at')
         
+        # คำนวณ Mood Stats สำหรับ Radar Chart
+        for mood in all_moods:
+            avg_intensity = ReviewMoodScore.objects.filter(
+                review__movie=movie, 
+                mood=mood
+            ).aggregate(avg=Avg('intensity'))['avg'] or 0
+            
+            mood_stats.append({
+                'name': mood.name,
+                'score': round(avg_intensity, 1)
+            })
+
         if request.user.is_authenticated:
             is_favorited = Favorite.objects.filter(user=request.user, movie=movie).exists()
             is_bookmarked = Bookmark.objects.filter(user=request.user, movie=movie).exists()
-            
-            # ดึง List ทั้งหมดของ User พร้อมเช็คว่าหนังเรื่องนี้อยู่ใน List นั้นหรือยัง
             user_lists = request.user.custom_lists.all().annotate(
                 has_movie=Count('movies', filter=Q(movies__id=movie.id))
             )
+            # หา User Review
+            user_review = reviews.filter(user=request.user).first()
+            
     elif request.user.is_authenticated:
-        # ถ้าหนังยังไม่มีใน DB เรา (แต่ User ล็อกอินอยู่) ก็ดึง List มาแสดงได้ (แต่สถานะ has_movie เป็น 0 หมด)
         user_lists = request.user.custom_lists.all()
 
     context = {
-        'movie_db': movie,
+        'movie': movie,
+        'movie_db': movie,      
         'movie_tmdb': tmdb_data,
         'reviews': reviews,
         'is_favorited': is_favorited,
         'is_bookmarked': is_bookmarked,
-        'user_lists': user_lists, # ส่ง List ไปหน้า Detail
+        'user_lists': user_lists,
+        'form': form,
+        'mood_stats': mood_stats,
+        'all_moods': all_moods,
+        'user_review': user_review,
     }
     return render(request, 'movies/detail.html', context)
 
@@ -119,7 +191,6 @@ def search_users(request):
     users = []
     
     if query:
-        # ค้นหาจาก username, ชื่อ, หรือ นามสกุล (ไม่รวม Superuser และตัวเอง)
         users = User.objects.filter(
             Q(username__icontains=query) | 
             Q(first_name__icontains=query) |
@@ -129,35 +200,27 @@ def search_users(request):
     return render(request, 'movies/search_users.html', {'users': users, 'query': query})
 
 def mood_recommendation(request, mood_id):
-    """แนะนำหนังตามอารมณ์ ด้วยสูตร Weighted Rating (IMDb Formula)"""
+    """แนะนำหนังตามอารมณ์ ด้วยสูตร Weighted Rating (IMDb Formula) [FIXED: กรองคะแนน 0 ออก]"""
     mood = get_object_or_404(Mood, id=mood_id)
     
-    # ---------------------------------------------------------
-    # 1. กำหนดตัวแปรสำหรับสูตร IMDb
-    # ---------------------------------------------------------
-    m = 1  # (m) Minimum Votes: จำนวนรีวิวขั้นต่ำที่จะนำมาคำนวณ (ปรับเลขได้)
+    m = 1  # Minimum Votes
     
-    # (C) Global Average: ค่าเฉลี่ยความเข้มข้นอารมณ์นี้ ของหนัง 'ทุกเรื่อง' ในระบบ
-    # ถ้ายังไม่มีรีวิวเลย ให้ตั้งค่า default เป็น 5.0 (กลางๆ)
-    global_stats = Review.objects.filter(primary_mood=mood).aggregate(avg_global=Avg('mood_intensity'))
+    # (C) Global Average: คิดเฉพาะที่มีคะแนน (>0) ไม่งั้นค่าเฉลี่ยจะต่ำเกินจริง
+    global_stats = ReviewMoodScore.objects.filter(mood=mood, intensity__gt=0).aggregate(avg_global=Avg('intensity'))
     C = global_stats['avg_global'] if global_stats['avg_global'] is not None else 5.0
 
-    # ---------------------------------------------------------
-    # 2. Query และคำนวณ Weighted Score
-    # ---------------------------------------------------------
+    # Query และคำนวณ Weighted Score
     recommended_movies = Movie.objects.filter(
-        reviews__primary_mood=mood
-    ).annotate(
-        # (v) Count: จำนวนรีวิวของหนังเรื่องนี้
-        v=Count('reviews', filter=Q(reviews__primary_mood=mood)),
-        # (R) Average: ค่าเฉลี่ยความเข้มข้นของหนังเรื่องนี้
-        R=Avg('reviews__mood_intensity', filter=Q(reviews__primary_mood=mood))
+        reviews__mood_scores__mood=mood,
+        reviews__mood_scores__intensity__gt=0 # [FIX] กรองหนังที่มีคะแนนอารมณ์นี้ > 0 เท่านั้น
+    ).distinct().annotate(
+        # (v) Count: นับเฉพาะคะแนน > 0
+        v=Count('reviews__mood_scores', filter=Q(reviews__mood_scores__mood=mood, reviews__mood_scores__intensity__gt=0)),
+        # (R) Average: เฉลี่ยเฉพาะคะแนน > 0
+        R=Avg('reviews__mood_scores__intensity', filter=Q(reviews__mood_scores__mood=mood, reviews__mood_scores__intensity__gt=0))
     ).filter(
-        # กรองเอาเฉพาะเรื่องที่มีรีวิวเกินค่า m (เช่น ต้องมี 5 คนขึ้นไปถึงจะติดอันดับ)
         v__gte=m  
     ).annotate(
-        # สูตร IMDb: WR = (v / (v+m)) * R + (m / (v+m)) * C
-        # แปลงเป็นคณิตศาสตร์ใน Django ORM (ExpressionWrapper เพื่อให้ผลลัพธ์เป็นทศนิยม)
         mood_score=ExpressionWrapper(
             ((F('v') * F('R')) + (m * C)) / (F('v') + m),
             output_field=FloatField()
@@ -174,48 +237,11 @@ def mood_recommendation(request, mood_id):
 # ==========================================
 
 @login_required
-def add_review(request, tmdb_id):
-    """เพิ่มรีวิวใหม่"""
-    movie = Movie.objects.filter(tmdb_id=tmdb_id).first()
-    if not movie:
-        tmdb_data = get_movie_details_tmdb(tmdb_id)
-        if tmdb_data:
-            movie = Movie.objects.create(
-                tmdb_id=tmdb_data['tmdb_id'],
-                title=tmdb_data['title'],
-                poster_path=tmdb_data['poster_path'],
-                overview=tmdb_data.get('overview', ''),
-                release_date=tmdb_data.get('release_date'),
-                vote_average=tmdb_data.get('vote_average', 0.0)
-            )
-        else:
-            messages.error(request, 'ไม่พบข้อมูลภาพยนตร์')
-            return redirect('home')
-
-    existing_review = Review.objects.filter(user=request.user, movie=movie).first()
-    if existing_review:
-        messages.warning(request, 'คุณเคยรีวิวหนังเรื่องนี้ไปแล้ว')
-        return redirect('movie_detail', tmdb_id=tmdb_id)
-
-    if request.method == 'POST':
-        form = ReviewForm(request.POST)
-        if form.is_valid():
-            review = form.save(commit=False)
-            review.user = request.user
-            review.movie = movie
-            review.save()
-            messages.success(request, 'บันทึกอารมณ์ของคุณเรียบร้อยแล้ว!')
-            return redirect('movie_detail', tmdb_id=tmdb_id)
-    else:
-        form = ReviewForm()
-
-    return render(request, 'movies/add_review.html', {'form': form, 'movie': movie})
-
-@login_required
 def edit_review(request, review_id):
-    """แก้ไขรีวิว (เฉพาะเจ้าของ)"""
+    """แก้ไขรีวิว (อัปเดตใหม่ รับค่า Slider ได้แล้ว)"""
     review = get_object_or_404(Review, id=review_id)
     
+    # ป้องกันคนอื่นมาเนียนแก้รีวิวเรา
     if request.user != review.user:
         messages.error(request, 'คุณไม่มีสิทธิ์แก้ไขรีวิวนี้')
         return redirect('movie_detail', tmdb_id=review.movie.tmdb_id)
@@ -223,21 +249,54 @@ def edit_review(request, review_id):
     if request.method == 'POST':
         form = ReviewForm(request.POST, instance=review)
         if form.is_valid():
-            form.save()
+            form.save() # 1. บันทึกข้อความ Comment ก่อน
+
+            # 2. บันทึกคะแนน Mood Score (ส่วนที่ขาดหายไป)
+            all_moods = Mood.objects.all()
+            
+            # [Debug] ปริ้นท์เช็กหน่อยว่าส่งอะไรมาบ้าง
+            print(f"--- Editing Review ID: {review_id} ---")
+            
+            for mood in all_moods:
+                score_key = f'mood_score_{mood.id}'
+                score_val = request.POST.get(score_key)
+                
+                if score_val and score_val.isdigit():
+                    intensity = int(score_val)
+                    
+                    # ถ้าคะแนนมากกว่า 0 ให้บันทึก/อัปเดต
+                    if intensity > 0:
+                        ReviewMoodScore.objects.update_or_create(
+                            review=review,
+                            mood=mood,
+                            defaults={'intensity': intensity}
+                        )
+                        print(f"Saved: {mood.name} = {intensity}")
+                    else:
+                        # (Option) ถ้าเลื่อนเหลือ 0 ให้ลบคะแนนอารมณ์นั้นทิ้ง
+                        ReviewMoodScore.objects.filter(review=review, mood=mood).delete()
+                        print(f"Removed: {mood.name}")
+
             messages.success(request, 'แก้ไขรีวิวเรียบร้อยแล้ว!')
             return redirect('movie_detail', tmdb_id=review.movie.tmdb_id)
+            
     else:
         form = ReviewForm(instance=review)
+
+    # ส่งคะแนนเดิมไปโชว์ที่หน้าเว็บด้วย (เผื่อ JS ดึงไปใช้)
+    existing_scores = {score.mood.id: score.intensity for score in review.mood_scores.all()}
 
     return render(request, 'movies/edit_review.html', {
         'form': form, 
         'movie': review.movie,
-        'review': review
+        'review': review,
+        'all_moods': Mood.objects.all(),
+        'existing_scores': existing_scores
     })
 
 @login_required
 def delete_review(request, review_id):
-    """ลบุรีวิว (เฉพาะเจ้าของ)"""
+    """ลบุรีวิว"""
     review = get_object_or_404(Review, id=review_id)
     tmdb_id = review.movie.tmdb_id
     
@@ -313,7 +372,7 @@ def admin_dashboard(request):
     total_movies = Movie.objects.count()
     total_reviews = Review.objects.count()
     total_users = User.objects.count()
-    recent_reviews = Review.objects.select_related('user', 'movie', 'primary_mood').order_by('-created_at')[:5]
+    recent_reviews = Review.objects.select_related('user', 'movie').order_by('-created_at')[:5]
     
     return render(request, 'movies/admin/dashboard.html', {
         'total_movies': total_movies,
@@ -356,16 +415,49 @@ def admin_moods(request):
 @staff_member_required(login_url='login')
 def admin_reviews(request):
     """จัดการรีวิว"""
-    reviews = Review.objects.select_related('user', 'movie', 'primary_mood').order_by('-created_at')
+    reviews = Review.objects.select_related('user', 'movie').order_by('-created_at')
     query = request.GET.get('q')
     if query:
         reviews = reviews.filter(
             Q(movie__title__icontains=query) | 
             Q(user__username__icontains=query) |
-            Q(review_text__icontains=query)
+            Q(comment__icontains=query)
         )
 
     return render(request, 'movies/admin/reviews.html', {'reviews': reviews, 'query': query})
+
+@staff_member_required(login_url='login')
+def admin_users(request):
+    """จัดการผู้ใช้งาน (แสดงรายชื่อ + ค้นหา)"""
+    # เรียงลำดับจากคนสมัครล่าสุดก่อน
+    users = User.objects.all().order_by('-date_joined')
+    
+    # ระบบค้นหา (ค้นจาก Username หรือ Email)
+    query = request.GET.get('q')
+    if query:
+        users = users.filter(
+            Q(username__icontains=query) | 
+            Q(email__icontains=query)
+        )
+        
+    return render(request, 'movies/admin/users.html', {'users': users, 'query': query})
+
+@staff_member_required(login_url='login')
+def admin_delete_user(request, user_id):
+    """ฟังก์ชันลบผู้ใช้งาน"""
+    user_to_delete = get_object_or_404(User, id=user_id)
+    
+    # 🛑 ระบบป้องกัน: ห้ามแอดมินลบตัวเอง!
+    if user_to_delete == request.user:
+        messages.error(request, 'คุณไม่สามารถลบบัญชีของตัวเองขณะล็อกอินได้')
+        return redirect('admin_users')
+    
+    # ถ้าไม่ใช่ตัวเอง ก็ลบได้เลย
+    username = user_to_delete.username
+    user_to_delete.delete()
+    
+    messages.success(request, f'ลบผู้ใช้ "{username}" ออกจากระบบเรียบร้อยแล้ว')
+    return redirect('admin_users')
 
 # ==========================================
 # 4. CUSTOM LIST MANAGEMENT
@@ -501,43 +593,55 @@ def user_lists(request, username):
 # 5. MOVIE CALENDAR
 # ==========================================
 
+from datetime import date, timedelta
+import calendar
+
 def movie_calendar(request):
     """แสดงปฏิทินหนังเข้าใหม่"""
-    # 1. หาปีและเดือนปัจจุบัน (หรือจาก URL)
-    today = date.today()
+    # 1. หาปีและเดือนปัจจุบัน (วันนี้จริงๆ)
+    today = date.today() 
+    
     try:
+        # อันนี้คือ ปี/เดือน ที่ user เลือกดู (อาจจะไม่ใช่เดือนปัจจุบัน)
         year = int(request.GET.get('year', today.year))
         month = int(request.GET.get('month', today.month))
     except ValueError:
         year = today.year
         month = today.month
 
-    # 2. หาวันแรกและวันสุดท้ายของเดือน เพื่อส่งไปดึงข้อมูล API
+    # 2. หาวันแรกและวันสุดท้ายของเดือน
     _, last_day = calendar.monthrange(year, month)
     start_date = f"{year}-{month:02d}-01"
     end_date = f"{year}-{month:02d}-{last_day}"
 
-    # 3. ดึงหนังจาก TMDb
-    movies = get_movies_in_date_range(start_date, end_date)
+    # 3. ดึงหนัง (สมมติว่าฟังก์ชันนี้มีอยู่แล้ว)
+    movies = get_movies_in_date_range(start_date, end_date) 
 
-    # 4. จัดกลุ่มหนังตาม "วันที่" เพื่อให้ง่ายต่อการแสดงผลใน Template
-    # ผลลัพธ์: {'2023-11-01': [movie1, movie2], '2023-11-15': [movie3]}
+    # 4. จัดกลุ่มหนังตามวันที่
     movies_by_date = {}
-    for movie in movies:
-        r_date = movie['release_date']
-        if r_date not in movies_by_date:
-            movies_by_date[r_date] = []
-        movies_by_date[r_date].append(movie)
+    # (เช็กนิดนึงว่า movies ไม่ใช่ None ก่อนวนลูป)
+    if movies:
+        for movie in movies:
+            r_date = movie.get('release_date') # ใช้ .get ป้องกัน error
+            if r_date:
+                if r_date not in movies_by_date:
+                    movies_by_date[r_date] = []
+                movies_by_date[r_date].append(movie)
 
-    # 5. สร้าง Matrix ปฏิทิน (List of Lists ของวันที่)
-    # 0 คือวันที่ไม่ใช่ของเดือนนี้ (ช่องว่าง)
+    # 5. สร้าง Matrix ปฏิทิน
     cal = calendar.monthcalendar(year, month)
 
-    # 6. คำนวณเดือนก่อนหน้าและเดือนถัดไป (สำหรับปุ่มเปลี่ยนเดือน)
+    # 6. คำนวณเดือนก่อนหน้า/ถัดไป
     prev_date = date(year, month, 1) - timedelta(days=1)
-    next_date = date(year, month, last_day) + timedelta(days=1)
+    # trick: หาวันที่ 1 ของเดือนถัดไป แล้วลบ 1 วันจะได้สิ้นเดือนนี้ -> บวกอีกทีจะได้เดือนหน้า
+    # หรือใช้วิธีคำนวณง่ายๆ:
+    if month == 12:
+        next_year = year + 1
+        next_month = 1
+    else:
+        next_year = year
+        next_month = month + 1
 
-    # ชื่อเดือนภาษาไทย
     thai_months = [
         "", "มกราคม", "กุมภาพันธ์", "มีนาคม", "เมษายน", "พฤษภาคม", "มิถุนายน",
         "กรกฎาคม", "สิงหาคม", "กันยายน", "ตุลาคม", "พฤศจิกายน", "ธันวาคม"
@@ -546,13 +650,19 @@ def movie_calendar(request):
     context = {
         'calendar': cal,
         'movies_by_date': movies_by_date,
-        'year': year,
-        'month': month,
+        'year': year,   # ปีที่กำลังดู
+        'month': month, # เดือนที่กำลังดู
         'month_name': thai_months[month],
         'prev_year': prev_date.year,
         'prev_month': prev_date.month,
-        'next_year': next_date.year,
-        'next_month': next_date.month,
+        'next_year': next_year,
+        'next_month': next_month,
+        
+        # --- ส่งวันปัจจุบันไปให้ HTML ---
+        'current_day': today.day,     # วันที่วันนี้ (เช่น 20)
+        'current_month': today.month, # เดือนนี้ (เช่น 2)
+        'current_year': today.year,   # ปีนี้ (เช่น 2026)
+        # -----------------------------------------------
     }
     return render(request, 'movies/calendar.html', context)
 

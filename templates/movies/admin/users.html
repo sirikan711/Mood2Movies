@@ -1,0 +1,170 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="flex h-[calc(100vh-64px)] overflow-hidden bg-gray-900">
+    
+    <aside class="w-64 bg-gray-800 border-r border-gray-700 hidden md:flex flex-col">
+        <div class="p-6 border-b border-gray-700">
+            <h2 class="text-xl font-bold text-white flex items-center gap-2">
+                <span class="text-yellow-500 text-2xl"></span> Admin Panel
+            </h2>
+            <p class="text-gray-500 text-xs mt-1">Mood2Movie Management</p>
+        </div>
+        
+        <nav class="flex-1 overflow-y-auto py-4 px-3 space-y-1">
+            <a href="{% url 'admin_dashboard' %}" class="flex items-center gap-3 px-4 py-3 text-gray-400 hover:bg-gray-700 hover:text-white rounded-lg transition group">
+                <svg class="w-5 h-5 group-hover:text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"></path></svg>
+                ภาพรวม
+            </a>
+            
+            <a href="{% url 'admin_movies' %}" class="flex items-center gap-3 px-4 py-3 text-gray-400 hover:bg-gray-700 hover:text-white rounded-lg transition group">
+                <svg class="w-5 h-5 group-hover:text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 4v16M17 4v16M3 8h4m10 0h4M3 12h18M3 16h4m10 0h4M4 20h16a1 1 0 001-1V5a1 1 0 00-1-1H4a1 1 0 00-1 1v14a1 1 0 001 1z"></path></svg>
+                จัดการหนัง
+            </a>
+            
+            <a href="{% url 'admin_moods' %}" class="flex items-center gap-3 px-4 py-3 text-gray-400 hover:bg-gray-700 hover:text-white rounded-lg transition group">
+                <svg class="w-5 h-5 group-hover:text-pink-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.828 14.828a4 4 0 01-5.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                จัดการอารมณ์
+            </a>
+
+            <a href="{% url 'admin_users' %}" class="flex items-center gap-3 px-4 py-3 bg-gray-700/50 text-yellow-500 rounded-lg font-bold border-l-4 border-yellow-500 transition shadow-inner">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"></path></svg>
+                จัดการผู้ใช้
+            </a>
+
+            <a href="{% url 'admin_reviews' %}" class="flex items-center gap-3 px-4 py-3 text-gray-400 hover:bg-gray-700 hover:text-white rounded-lg transition group">
+                <svg class="w-5 h-5 group-hover:text-yellow-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z"></path></svg>
+                จัดการรีวิว
+            </a>
+        </nav>
+        
+        <div class="p-4 border-t border-gray-700">
+            <a href="{% url 'home' %}" class="flex items-center gap-2 text-sm text-gray-500 hover:text-white transition">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path></svg>
+                กลับหน้าหลัก
+            </a>
+        </div>
+    </aside>
+
+    <div class="flex-1 overflow-y-auto p-6 md:p-10 scrollbar-hide">
+        
+        <div class="flex justify-between items-center mb-8">
+            <h1 class="text-3xl font-bold text-white flex items-center gap-3">
+                <span class="p-2 bg-purple-500/20 text-purple-400 rounded-lg">
+                    <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"></path></svg>
+                </span>
+                จัดการผู้ใช้งาน
+            </h1>
+            <span class="bg-gray-800 text-xs px-3 py-1 rounded-full border border-gray-600 text-gray-400">
+                ทั้งหมด {{ users.count }} บัญชี
+            </span>
+        </div>
+
+        <div class="bg-gray-800 p-4 rounded-xl shadow-lg border border-gray-700 mb-6">
+            <form method="GET" class="relative">
+                <span class="absolute inset-y-0 left-0 pl-4 flex items-center text-gray-500">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+                </span>
+                <input type="text" name="q" value="{{ query|default:'' }}" placeholder="ค้นหาชื่อผู้ใช้ หรือ อีเมล..." 
+                       class="w-full pl-12 pr-4 py-3 bg-gray-900 border border-gray-600 rounded-lg text-white placeholder-gray-500 focus:border-purple-500 focus:ring-1 focus:ring-purple-500 transition outline-none">
+            </form>
+        </div>
+
+        <div class="bg-gray-800 rounded-xl shadow-lg border border-gray-700 overflow-hidden">
+            <div class="overflow-x-auto">
+                <table class="w-full text-left border-collapse">
+                    <thead>
+                        <tr class="bg-gray-900/50 text-gray-400 text-sm uppercase tracking-wider border-b border-gray-700">
+                            <th class="py-4 px-6 w-20">ID</th>
+                            <th class="py-4 px-6">Username</th>
+                            <th class="py-4 px-6">Email</th>
+                            <th class="py-4 px-6">Joined Date</th>
+                            <th class="py-4 px-6">Status</th>
+                            <th class="py-4 px-6 text-right">Action</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-gray-700">
+                        {% for user in users %}
+                        <tr class="hover:bg-gray-700/50 transition duration-150 group">
+                            
+                            <td class="py-4 px-6 text-gray-500 font-mono text-xs">
+                                #{{ user.id }}
+                            </td>
+
+                            <td class="py-4 px-6">
+                                <div class="flex items-center gap-3">
+                                    <div class="w-8 h-8 rounded-full bg-gray-600 overflow-hidden flex-shrink-0 border border-gray-500 flex items-center justify-center">
+                                        {% if user.profile.avatar %}
+                                            <img src="{{ user.profile.avatar.url }}" class="w-full h-full object-cover">
+                                        {% else %}
+                                            <span class="text-xs font-bold text-white">{{ user.username|slice:":1"|upper }}</span>
+                                        {% endif %}
+                                    </div>
+                                    <span class="font-medium text-white group-hover:text-purple-400 transition">{{ user.username }}</span>
+                                </div>
+                            </td>
+
+                            <td class="py-4 px-6 text-gray-400 text-sm">
+                                {{ user.email|default:"-" }}
+                            </td>
+
+                            <td class="py-4 px-6 text-sm text-gray-400">
+                                {{ user.date_joined|date:"d M Y" }}
+                                <br>
+                                <span class="text-xs opacity-60">{{ user.date_joined|date:"H:i" }}</span>
+                            </td>
+
+                            <td class="py-4 px-6">
+                                {% if user.is_superuser %}
+                                    <span class="inline-flex items-center bg-red-500/20 text-red-400 text-xs px-2 py-1 rounded border border-red-500/30">
+                                        Admin
+                                    </span>
+                                {% else %}
+                                    <span class="inline-flex items-center bg-green-500/20 text-green-400 text-xs px-2 py-1 rounded border border-green-500/30">
+                                        User
+                                    </span>
+                                {% endif %}
+                            </td>
+
+                            <td class="py-4 px-6 text-right">
+                                <div class="flex items-center justify-end gap-2">
+                                    
+                                    <a href="{% url 'user_profile' user.username %}" target="_blank" 
+                                    class="p-2 text-gray-400 hover:text-white hover:bg-gray-700 rounded-lg transition" 
+                                    title="ดูโปรไฟล์ (เปิดแท็บใหม่)">
+                                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                                        </svg>
+                                    </a>
+
+                                    {% if user != request.user %}
+                                        <a href="{% url 'admin_delete_user' user.id %}" 
+                                        onclick="return confirm('⚠️ คำเตือน: การลบผู้ใช้จะทำให้รีวิวและรายการหนังทั้งหมดของเขาหายไป!\n\nยืนยันที่จะลบ {{ user.username }} หรือไม่?')" 
+                                        class="p-2 text-red-400 hover:text-white hover:bg-red-600 rounded-lg transition" 
+                                        title="ลบผู้ใช้นี้">
+                                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                            </svg>
+                                        </a>
+                                    {% else %}
+                                        <span class="p-2 text-gray-600 cursor-not-allowed" title="ลบไม่ได้ (บัญชีของคุณ)">
+                                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path></svg>
+                                        </span>
+                                    {% endif %}
+                                </div>
+                            </td>                            
+                            {% empty %}
+                        <tr>
+                            <td colspan="6" class="p-12 text-center text-gray-500">
+                                <svg class="w-16 h-16 mx-auto mb-4 opacity-30" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"></path></svg>
+                                ไม่พบข้อมูลผู้ใช้
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

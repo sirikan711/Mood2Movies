@@ -1,6 +1,6 @@
 from django.contrib import admin
 from django.utils.html import format_html
-from .models import Movie, Mood, Review, Favorite, Bookmark, CustomList, Profile
+from .models import Movie, Mood, Review, Favorite, Bookmark, CustomList, Profile, ReviewMoodScore
 
 # Config Header
 admin.site.site_header = "Mood2Movie Administration"
@@ -13,8 +13,16 @@ class MoodAdmin(admin.ModelAdmin):
     search_fields = ('name',)
     
     def get_emoji_display(self, obj):
-        return str(obj).split(' ')[0]
+        # ดึง Property emoji จาก Model มาแสดง
+        return obj.emoji
     get_emoji_display.short_description = 'Emoji'
+
+class ReviewMoodScoreInline(admin.TabularInline):
+    """สร้างตารางคะแนนอารมณ์ซ้อนอยู่ในหน้ารีวิว"""
+    model = ReviewMoodScore
+    extra = 1 # จำนวนแถวว่างที่แสดงให้เพิ่มข้อมูล
+    min_num = 0
+    can_delete = True
 
 @admin.register(Movie)
 class MovieAdmin(admin.ModelAdmin):
@@ -32,10 +40,15 @@ class MovieAdmin(admin.ModelAdmin):
 
 @admin.register(Review)
 class ReviewAdmin(admin.ModelAdmin):
-    list_display = ('user', 'movie', 'primary_mood', 'mood_intensity', 'created_at')
-    list_filter = ('primary_mood', 'mood_intensity', 'created_at') 
-    search_fields = ('user__username', 'movie__title', 'review_text')
+    # [UPDATED] ลบ primary_mood, mood_intensity ออก
+    list_display = ('id', 'user', 'movie', 'created_at')
+    list_filter = ('created_at',) 
+    # [UPDATED] เปลี่ยน review_text เป็น comment ให้ตรงกับ Model
+    search_fields = ('user__username', 'movie__title', 'comment')
     date_hierarchy = 'created_at'
+    
+    # [NEW] ใส่ Inline เพื่อให้จัดการคะแนนอารมณ์ได้ในหน้าเดียวกัน
+    inlines = [ReviewMoodScoreInline]
 
 @admin.register(Profile)
 class ProfileAdmin(admin.ModelAdmin):

@@ -1,0 +1,44 @@
+# Mood2Movie - Django Application Requirements
+
+# Core Framework
+Django==5.2.8
+
+# Database
+psycopg2-binary==2.9.9
+
+# API & HTTP
+requests==2.31.0
+
+# Image Processing
+Pillow==10.1.0
+
+# Environment Variables
+python-dotenv==1.0.0
+
+# Optional: Production Server
+gunicorn==21.2.0
+
+# Optional: Development Tools
+django-extensions==3.2.3
+django-debug-toolbar==4.2.0
+
+# Optional: Task Queue
+celery==5.3.4
+redis==5.0.1
+
+# Optional: API Documentation
+drf-spectacular==0.26.5
+
+# Optional: Caching
+django-redis==5.4.0
+
+# Optional: Testing
+pytest==7.4.3
+pytest-django==4.7.0
+pytest-cov==4.1.0
+
+# Optional: Code Quality
+black==23.12.0
+flake8==6.1.0
+pylint==3.0.3
+isort==5.13.2

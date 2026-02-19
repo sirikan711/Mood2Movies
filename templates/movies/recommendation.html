@@ -21,8 +21,13 @@
                 {% else %}
                 <div class="w-full h-64 md:h-72 bg-gray-700 flex items-center justify-center text-gray-500">No Poster</div>
                 {% endif %}
+
+                <!-- Overlay Rank (ถ้าอยากใส่ลำดับที่) -->
+                <div class="absolute top-0 left-0 bg-yellow-500 text-gray-900 font-bold px-3 py-1 rounded-br-lg shadow-md z-10">
+                    #{{ forloop.counter }}
+                </div>
             </div>
-            
+
             <div class="p-4 flex flex-col flex-grow justify-between">
                 <div>
                     <h3 class="font-bold text-base md:text-lg truncate group-hover:text-yellow-500 transition" title="{{ movie.title }}">{{ movie.title }}</h3>
@@ -41,7 +46,7 @@
         </a>
         {% empty %}
             <div class="col-span-full text-center py-16 bg-gray-800 rounded-xl border-2 border-dashed border-gray-700 mx-4">
-                <p class="text-xl md:text-2xl text-gray-400 mb-4">ยังไม่มีหนังเรื่องไหนที่ผ่านเกณฑ์ "{{ mood.name }}" 😅</p>
+                <p class="text-xl md:text-2xl text-gray-400 mb-4">ยังไม่มีหนังเรื่องไหนที่ผ่านเกณฑ์ "{{ mood.name }}"</p>
                 
                 <p class="text-sm text-gray-500 mb-4">
                     หมายเหตุ: ระบบจะแสดงเฉพาะหนังที่มีผู้รีวิวอารมณ์นี้อย่างน้อย 5 คนขึ้นไป<br>

@@ -85,7 +85,7 @@ def movie_detail(request, tmdb_id):
     tmdb_data = get_movie_details_tmdb(tmdb_id)
     
     if not tmdb_data:
-         return render(request, '404.html')
+        return render(request, '404.html', status=404)
 
     # ถ้ายังไม่มีหนังใน DB ให้สร้างใหม่
     if not movie and tmdb_data:

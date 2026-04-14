@@ -13,20 +13,29 @@ https://docs.djangoproject.com/en/5.2/ref/settings/
 from pathlib import Path
 import os
 
+from dotenv import load_dotenv
+
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
+
+# Load environment variables from .env if present
+load_dotenv(BASE_DIR / '.env')
 
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/5.2/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-opluvl1u^m6flfuw-er0#jz@$$r5$9wvxceq*=3!+!qnc^c5xi'
+# ให้ตั้งค่าใน environment variable: DJANGO_SECRET_KEY
+SECRET_KEY = os.getenv(
+    'DJANGO_SECRET_KEY',
+    'django-insecure-opluvl1u^m6flfuw-er0#jz@$$r5$9wvxceq*=3!+!qnc^c5xi'
+)
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = os.getenv('DJANGO_DEBUG', 'True').lower() in ('true', '1', 'yes')
 
-ALLOWED_HOSTS = ['localhost', '127.0.0.1']
+ALLOWED_HOSTS = os.getenv('DJANGO_ALLOWED_HOSTS', 'localhost,127.0.0.1').split(',')
 
 
 # Application definition
@@ -80,14 +89,17 @@ WSGI_APPLICATION = 'config.wsgi.application'
 
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.postgresql',
-        'NAME': 'mood2movie_db',      # ชื่อ DB ที่สร้าง
-        'USER': 'postgres',
-        'PASSWORD': '1234',
-        'HOST': 'localhost',          # รันในเครื่องตัวเอง
-        'PORT': '5432',               # Port มาตรฐาน
+        'ENGINE': os.getenv('DJANGO_DB_ENGINE', 'django.db.backends.postgresql'),
+        'NAME': os.getenv('POSTGRES_DB', 'mood2movie_db'),      # ชื่อ DB ที่สร้าง
+        'USER': os.getenv('POSTGRES_USER', 'postgres'),
+        'PASSWORD': os.getenv('POSTGRES_PASSWORD', '1234'),
+        'HOST': os.getenv('POSTGRES_HOST', 'localhost'),          # รันในเครื่องตัวเอง
+        'PORT': os.getenv('POSTGRES_PORT', '5432'),               # Port มาตรฐาน
     }
 }
+
+# TMDb API key
+TMDB_API_KEY = os.getenv('TMDB_API_KEY', '')
 
 
 # Password validation

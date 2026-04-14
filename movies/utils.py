@@ -2,7 +2,7 @@
 import requests
 from django.conf import settings
 
-TMDB_API_KEY = getattr(settings, 'TMDB_API_KEY', '8f3fabb4ea55b62b7d611bc956f12b8b') 
+TMDB_API_KEY = getattr(settings, 'TMDB_API_KEY', '')
 TMDB_BASE_URL = 'https://api.themoviedb.org/3'
 TMDB_IMAGE_BASE_URL = 'https://image.tmdb.org/t/p/w500' # ขนาดรูปภาพมาตรฐาน
 

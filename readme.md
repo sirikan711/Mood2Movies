@@ -14,13 +14,17 @@ python -m venv venv
 ```
 
 ### 3. เปิดใช้งาน virtual environment
-- PowerShell:
+- Windows PowerShell:
 ```powershell
-.env\Scripts\Activate.ps1
+.venv\Scripts\Activate.ps1
 ```
-- CMD:
+- Windows CMD:
 ```cmd
-.env\Scripts\Activate
+.venv\Scripts\activate
+```
+- macOS / Linux:
+```mac
+source venv/bin/activate
 ```
 
 ### 4. ติดตั้ง dependencies
@@ -30,6 +34,13 @@ pip install -r requirements.txt
 
 ### 5. ตั้งค่าตัวแปรแวดล้อม
 คัดลอกไฟล์ `.env.example` เป็น `.env` แล้วแก้ค่าตามเครื่องของคุณ
+```bash
+# Windows
+copy .env.example .env
+
+# macOS / Linux
+cp .env.example .env
+```
 
 ### 6. ตัวอย่างไฟล์ `.env`
 ```dotenv
@@ -46,11 +57,11 @@ TMDB_API_KEY=your-tmdb-api-key-here
 ```
 
 ### 7. สร้างฐานข้อมูล PostgreSQL
-ใช้คำสั่งใน PostgreSQL:
+ใช้คำสั่งใน PostgreSQL Shell:
 ```sql
 CREATE DATABASE mood2movie_db;
 ```
-ถ้าใช้ user และรหัสผ่านที่ต่างจากค่า default ให้แก้ไข `.env` ตามจริง
+ถ้าใช้ username หรือรหัสผ่านที่ต่างจากค่า default ให้แก้ไข `.env` ตามจริง
 
 ### 8. รัน migration
 ```bash
